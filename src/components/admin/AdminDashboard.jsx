@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, Clock3, LayoutDashboard, LogOut, Package, Pencil, Plus, Search, Trash2, Users, X } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, Clock3, Download, FileClock, LayoutDashboard, LogOut, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
 
 const API = '/api';
 const money = value => `TZS ${Number(value || 0).toLocaleString('en-TZ', { maximumFractionDigits: 2 })}`;
@@ -23,7 +23,9 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'products', label: 'Products', icon: Package },
-  { id: 'shifts', label: 'Shifts', icon: Clock3 }
+  { id: 'shifts', label: 'Shifts', icon: Clock3 },
+  { id: 'audit', label: 'Audit log', icon: FileClock },
+  { id: 'backup', label: 'Backup', icon: Download }
 ];
 
 const categories = ['Printing', 'Branding', 'Stationary', 'Internet', 'Graphics'];
@@ -45,6 +47,9 @@ export default function AdminDashboard({ token, user, onSignOut }) {
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productSaving, setProductSaving] = useState(false);
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [restoring, setRestoring] = useState(false);
+  const [backupMessage, setBackupMessage] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +67,9 @@ export default function AdminDashboard({ token, user, onSignOut }) {
         } else if (activePage === 'shifts') {
           const data = await request('/admin/shifts', token);
           if (!cancelled) setShifts(data.shifts);
+        } else if (activePage === 'audit') {
+          const data = await request('/admin/audit?limit=100', token);
+          if (!cancelled) setAuditEvents(data.events);
         } else {
           const data = await request('/admin/products', token);
           if (!cancelled) setProducts(data.products);
@@ -156,6 +164,43 @@ export default function AdminDashboard({ token, user, onSignOut }) {
     }
   }
 
+  async function downloadBackup() {
+    setBackupMessage('');
+    try {
+      const backup = await request('/admin/backup', token);
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `imoka-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setBackupMessage('Backup downloaded. Keep it in a secure location.');
+    } catch (backupError) {
+      setBackupMessage(backupError.message);
+    }
+  }
+
+  async function restoreBackup(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!window.confirm('Restore this backup? It will replace current users, sales, shifts and products. This cannot be undone.')) return;
+    setRestoring(true);
+    setBackupMessage('');
+    try {
+      const backup = JSON.parse(await file.text());
+      await request('/admin/backup/restore', token, { method: 'POST', body: JSON.stringify(backup) });
+      sessionStorage.removeItem('imoka_pos_token');
+      sessionStorage.removeItem('imoka_pos_user');
+      setBackupMessage('Backup restored. Returning to sign in...');
+      window.location.hash = '#login';
+    } catch (restoreError) {
+      setBackupMessage(restoreError instanceof SyntaxError ? 'The selected file is not valid JSON.' : restoreError.message);
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#edf2ef] text-gray-900">
       <aside className="fixed inset-y-0 left-0 z-20 flex w-[250px] flex-col bg-[#174e46] px-4 py-6 text-white max-[700px]:w-[72px] max-[700px]:px-2">
@@ -220,13 +265,37 @@ export default function AdminDashboard({ token, user, onSignOut }) {
               <div className="overflow-x-auto border border-gray-200 bg-white"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-[#f5f8f6] text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">Product</th><th className="px-4 py-3 font-semibold">Category</th><th className="px-4 py-3 font-semibold">Price</th><th className="px-4 py-3 font-semibold">Stock</th><th className="px-4 py-3 font-semibold">Actions</th></tr></thead><tbody>{products.map(product => <tr className="border-t border-gray-100" key={product.id}><td className="px-4 py-3.5 font-medium">{product.name}<small className="mt-0.5 block text-xs text-gray-500">{product.id}</small></td><td className="px-4 py-3.5 text-gray-600">{product.category}</td><td className="px-4 py-3.5">{money(product.price)}</td><td className="px-4 py-3.5">{product.stockTracked === false ? <span className="text-gray-500">Not tracked</span> : <span className={product.stock <= 5 ? 'font-semibold text-amber-700' : 'text-gray-700'}>{product.stock}</span>}</td><td className="px-4 py-3.5"><div className="flex gap-2"><button type="button" title={`Edit ${product.name}`} aria-label={`Edit ${product.name}`} onClick={() => openProductForm(product)} className="grid size-9 place-items-center border border-blue-200 bg-blue-50 text-blue-700 transition-colors hover:bg-blue-100"><Pencil size={16} /></button><button type="button" title={`Delete ${product.name}`} aria-label={`Delete ${product.name}`} onClick={() => deleteProduct(product)} className="grid size-9 place-items-center border border-red-200 bg-red-50 text-red-700 transition-colors hover:bg-red-100"><Trash2 size={16} /></button></div></td></tr>)}{!products.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No products in the catalog.</td></tr>}</tbody></table></div>
             </>
           )}
+
+          {activePage === 'audit' && (
+            <>
+              <div className="mb-6"><p className="text-sm text-gray-500">Read-only history of important account and business actions.</p><h2 className="mt-1 text-2xl font-semibold">Audit log</h2></div>
+              <div className="overflow-x-auto border border-gray-200 bg-white"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-[#f5f8f6] text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">When</th><th className="px-4 py-3 font-semibold">Actor</th><th className="px-4 py-3 font-semibold">Action</th><th className="px-4 py-3 font-semibold">Record</th><th className="px-4 py-3 font-semibold">Details</th></tr></thead><tbody>{auditEvents.map(event => <tr className="border-t border-gray-100" key={event.id}><td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{dateTime(event.createdAt)}</td><td className="px-4 py-3.5 font-medium">{event.actorName}</td><td className="px-4 py-3.5">{event.action}</td><td className="px-4 py-3.5 text-gray-600">{event.entity}{event.entityId ? ` · ${event.entityId}` : ''}</td><td className="px-4 py-3.5 text-gray-600">{Object.values(event.details || {}).join(' · ') || '—'}</td></tr>)}{!auditEvents.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No audit events recorded.</td></tr>}</tbody></table></div>
+            </>
+          )}
+
+          {activePage === 'backup' && (
+            <>
+              <div className="mb-6"><p className="text-sm text-gray-500">Export or restore the application’s persistent business data.</p><h2 className="mt-1 text-2xl font-semibold">Data backup</h2></div>
+              <div className="max-w-2xl border border-gray-200 bg-white p-5">
+                <h3 className="text-base font-semibold">Download backup</h3>
+                <p className="mt-1 text-sm leading-6 text-gray-600">Exports users, products, sales, shifts and audit history as a JSON file. Passwords are included only as salted hashes.</p>
+                <button className="mt-4 inline-flex h-10 items-center gap-2 bg-[#174e46] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#23665a]" type="button" onClick={downloadBackup}><Download size={17} /> Download JSON backup</button>
+              </div>
+              <div className="mt-5 max-w-2xl border border-red-200 bg-white p-5">
+                <h3 className="text-base font-semibold text-red-800">Restore backup</h3>
+                <p className="mt-1 text-sm leading-6 text-gray-600">Restoring replaces current users, products, sales and shifts. Download a current backup first and only restore a trusted file.</p>
+                <label className="mt-4 inline-flex h-10 cursor-pointer items-center gap-2 border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"><Upload size={17} />{restoring ? 'Restoring...' : 'Choose backup file'}<input className="sr-only" type="file" accept="application/json,.json" disabled={restoring} onChange={restoreBackup} /></label>
+              </div>
+              {backupMessage && <p className="mt-4 text-sm text-gray-700" role="status">{backupMessage}</p>}
+            </>
+          )}
         </section>
       </main>
 
       {showUserForm && <div className="fixed inset-0 z-50 grid place-items-center bg-gray-950/45 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowUserForm(false); }}>
         <section className="w-full max-w-[480px] border border-gray-200 bg-white p-6 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
           <div className="mb-5 flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#367c69]">Team access</p><h2 id="create-user-title" className="mt-1 text-2xl font-semibold">Add a cashier</h2></div><button type="button" className="grid size-9 place-items-center text-gray-500 hover:bg-gray-100 hover:text-gray-900" aria-label="Close" onClick={() => setShowUserForm(false)}><X size={19} /></button></div>
-          {createdUser ? <div className="border border-[#c8dfd0] bg-[#f1f7f3] p-4"><p className="font-semibold text-[#174e46]">Cashier account created</p><p className="mt-2 text-sm text-gray-700">{createdUser.user.firstName} {createdUser.user.lastName} can sign in with:</p><p className="mt-3 text-sm"><strong>Email:</strong> {createdUser.user.email}</p><p className="mt-1 text-sm"><strong>Temporary password:</strong> <code className="select-all bg-white px-1.5 py-1">{createdUser.initialPassword}</code></p><p className="mt-3 text-xs leading-5 text-gray-600">Share this password securely. It is generated from the last name and should be changed before the account is used in production.</p><button className="mt-5 h-10 w-full bg-[#174e46] px-4 text-sm font-semibold text-white hover:bg-[#23665a]" type="button" onClick={() => setShowUserForm(false)}>Done</button></div> : <form className="grid gap-4" onSubmit={createUser} noValidate>
+          {createdUser ? <div className="border border-[#c8dfd0] bg-[#f1f7f3] p-4"><p className="font-semibold text-[#174e46]">Cashier account created</p><p className="mt-2 text-sm text-gray-700">{createdUser.user.firstName} {createdUser.user.lastName} can sign in with:</p><p className="mt-3 text-sm"><strong>Email:</strong> {createdUser.user.email}</p><p className="mt-1 text-sm"><strong>Temporary password:</strong> <code className="select-all bg-white px-1.5 py-1">{createdUser.initialPassword}</code></p><p className="mt-3 text-xs leading-5 text-gray-600">Share this password securely. The cashier will be required to change it at first sign-in.</p><button className="mt-5 h-10 w-full bg-[#174e46] px-4 text-sm font-semibold text-white hover:bg-[#23665a]" type="button" onClick={() => setShowUserForm(false)}>Done</button></div> : <form className="grid gap-4" onSubmit={createUser} noValidate>
             <label className="grid gap-1.5 text-sm font-medium">First name<input className="h-11 border border-gray-300 px-3 outline-none focus:border-[#367c69]" name="firstName" type="text" maxLength={80} autoComplete="given-name" required /></label>
             <label className="grid gap-1.5 text-sm font-medium">Last name<input className="h-11 border border-gray-300 px-3 outline-none focus:border-[#367c69]" name="lastName" type="text" maxLength={80} autoComplete="family-name" required /></label>
             <label className="grid gap-1.5 text-sm font-medium">Email address<input className="h-11 border border-gray-300 px-3 outline-none focus:border-[#367c69]" name="email" type="email" maxLength={254} autoComplete="email" required /></label>
