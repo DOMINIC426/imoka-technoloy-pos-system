@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
+import { apiUrl } from '../../api.js';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,7 +25,7 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: username.trim(), password })
@@ -52,7 +53,7 @@ export default function LoginPage() {
           <p className="mb-5 text-xs font-semibold uppercase tracking-[.18em] text-[#b6d7c4]">Business operations</p>
           <h1 className="max-w-[540px] text-6xl font-semibold leading-[1.02] [font-family:'Barlow_Condensed',sans-serif]">Good work starts with a clear view.</h1>
           <p className="mt-6 max-w-md text-sm leading-7 text-white/75">Sign in to manage sales, products, customers and reports in one place.</p>
-          <div className="mt-12 flex items-center gap-3 text-xs text-white/65"><span className="h-px w-10 bg-[#b6d7c4]"></span> IMOKA - DAR ES SALAAM</div>
+          <div className="mt-12 flex items-center gap-3 text-xs text-white/65"><span className="h-px w-10 bg-[#b6d7c4]"></span> IMOKA - KIWIRA , TANDALE</div>
         </div>
         <span className="text-xs text-white/55">(c) {new Date().getFullYear()} Imoka Technology</span>
         <div className="pointer-events-none absolute -bottom-28 -right-20 size-[420px] rounded-full border border-white/10" aria-hidden="true"></div>

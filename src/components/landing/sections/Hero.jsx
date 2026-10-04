@@ -6,7 +6,7 @@ export default function Hero() {
     <section className="isolate bg-gradient-to-br from-gray-950 via-gray-900 to-slate-800 text-white" id="home">
       <div className="mx-auto grid min-h-[560px] w-[min(1240px,calc(100%-64px))] grid-cols-[.94fr_1.06fr] items-center gap-16 py-16 max-[980px]:gap-8 max-[680px]:min-h-0 max-[680px]:w-[calc(100%-36px)] max-[680px]:grid-cols-1 max-[680px]:gap-[35px] max-[680px]:pb-[38px] max-[680px]:pt-[54px]">
         <div className="relative z-[2]">
-          <p className="mb-5 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400"><span className="h-0.5 w-[22px] bg-current"></span> Creative studio · Dar es Salaam</p>
+          <p className="mb-5 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400"><span className="h-0.5 w-[22px] bg-current"></span> Creative studio · Mbeya - Kiwira , Tandale</p>
           <h1 className="m-0 max-w-[640px] text-[72px] font-bold uppercase leading-[.88] text-blue-400 [font-family:'Barlow_Condensed',sans-serif] max-[980px]:text-[62px] max-[680px]:max-w-[430px] max-[680px]:text-[56px] max-[680px]:leading-[.94] max-[380px]:text-[48px]">IMOKA <em className="not-italic">TECHNOLOGY</em></h1>
           <h2 className="mt-[17px] max-w-[470px] text-[26px] font-semibold uppercase leading-[1.05] text-white [font-family:'Barlow_Condensed',sans-serif] max-[680px]:max-w-[390px] max-[680px]:text-[23px]">Creative solutions for your business</h2>
           <p className="mt-[15px] max-w-[425px] text-[10px] uppercase leading-[1.7] tracking-[.05em] text-gray-300 max-[680px]:max-w-[390px] max-[680px]:text-[9px]">Branding / Printing / Stationery / Graphic design / Internet services</p>

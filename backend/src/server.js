@@ -1,25 +1,24 @@
 import { createServer } from 'node:http';
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
+import { Prisma, PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 const port = Number(process.env.PORT || 3000);
-const dataFile = process.env.DATA_FILE || '/app/data/database.json';
+const sessionLifetimeMs = 1000 * 60 * 60 * 24 * 14;
+const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean);
 const seededAdmin = {
   email: 'imoka@technology.com',
-  password: 'Sautimoja2627',
+  password: process.env.ADMIN_INITIAL_PASSWORD,
   firstName: 'Imoka',
   lastName: 'Administrator'
 };
-const sessions = new Map();
-let store;
-let writes = Promise.resolve();
 
 function hashPassword(password, salt = randomBytes(16).toString('hex')) {
   return { salt, hash: scryptSync(password, salt, 64).toString('hex') };
 }
 
 function passwordMatches(password, user) {
+  if (!user?.passwordSalt || !user?.passwordHash) return false;
   const actual = Buffer.from(hashPassword(password, user.passwordSalt).hash, 'hex');
   const expected = Buffer.from(user.passwordHash, 'hex');
   return actual.length === expected.length && timingSafeEqual(actual, expected);
@@ -37,70 +36,26 @@ function publicUser(user) {
   };
 }
 
-function audit(session, action, entity, entityId = null, details = {}) {
-  store.audit.push({
-    id: randomUUID(),
-    actorId: session?.user?.id || null,
-    actorName: session?.user ? `${session.user.firstName} ${session.user.lastName}` : 'System',
-    action,
-    entity,
-    entityId,
-    details,
-    createdAt: new Date().toISOString()
-  });
-  if (store.audit.length > 5000) store.audit.splice(0, store.audit.length - 5000);
-}
-
-async function persist() {
-  writes = writes.then(async () => {
-    await mkdir(dirname(dataFile), { recursive: true });
-    const temporaryFile = `${dataFile}.tmp`;
-    await writeFile(temporaryFile, JSON.stringify(store, null, 2), { mode: 0o600 });
-    await rename(temporaryFile, dataFile);
-  });
-  return writes;
-}
-
-async function loadStore() {
-  try {
-    store = JSON.parse(await readFile(dataFile, 'utf8'));
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-    store = { users: [], sales: [], shifts: [], products: [], audit: [] };
-  }
-  if (!Array.isArray(store.audit)) store.audit = [];
-  if (!Array.isArray(store.products)) {
-    store.products = [
-      { id: 'P001', name: 'A4 Black & White Printing', price: 500, stock: 100, stockTracked: true, category: 'Printing' },
-      { id: 'P002', name: 'A4 Colour Printing', price: 1000, stock: 100, stockTracked: true, category: 'Printing' },
-      { id: 'P003', name: 'A3 Colour Printing', price: 2500, stock: 50, stockTracked: true, category: 'Printing' },
-      { id: 'P004', name: 'Photocopy A4', price: 300, stock: 200, stockTracked: true, category: 'Printing' },
-      { id: 'P005', name: 'Business Card Design', price: 15000, stock: 20, stockTracked: true, category: 'Graphics' },
-      { id: 'P006', name: 'Lamination A4', price: 2000, stock: 60, stockTracked: true, category: 'Printing' }
-    ];
-    await persist();
-  }
-
-  if (!store.users.some(user => user.email === seededAdmin.email)) {
-    const credentials = hashPassword(seededAdmin.password);
-    store.users.push({
-      id: randomUUID(),
-      firstName: seededAdmin.firstName,
-      lastName: seededAdmin.lastName,
-      email: seededAdmin.email,
-      role: 'admin',
-      passwordSalt: credentials.salt,
-      passwordHash: credentials.hash,
-      mustChangePassword: false,
-      createdAt: new Date().toISOString()
-    });
-    await persist();
-  }
+function hashToken(token) {
+  return createHash('sha256').update(token).digest('hex');
 }
 
 function send(response, status, payload) {
-  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
   response.end(JSON.stringify(payload));
+}
+
+function setCors(request, response) {
+  const origin = request.headers.origin;
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Vary', 'Origin');
+    response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    return true;
+  }
+  return false;
 }
 
 async function readBody(request) {
@@ -112,29 +67,85 @@ async function readBody(request) {
   return body ? JSON.parse(body) : {};
 }
 
-function getSession(request) {
+function validEmail(email) {
+  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+function validateProduct(body) {
+  const categories = ['Printing', 'Branding', 'Stationary', 'Internet', 'Graphics'];
+  const name = String(body.name || '').trim();
+  const category = String(body.category || '');
+  const price = Number(body.price);
+  const stockTracked = body.stockTracked !== false;
+  const stock = stockTracked ? Number(body.stock) : 0;
+  if (!name || name.length > 160 || !categories.includes(category) || !Number.isFinite(price) || price < 0 || !Number.isInteger(stock) || stock < 0) return null;
+  return { name, category, price: new Prisma.Decimal(price), stockTracked, stock };
+}
+
+async function getSession(request) {
   const token = request.headers.authorization?.replace(/^Bearer\s+/i, '');
-  const session = token && sessions.get(token);
-  return session ? { ...session, token, user: store.users.find(user => user.id === session.userId) } : null;
+  if (!token) return null;
+  const session = await prisma.session.findUnique({
+    where: { tokenHash: hashToken(token) },
+    include: { user: true, shift: true }
+  });
+  if (!session) return null;
+  if (session.expiresAt <= new Date()) {
+    await prisma.session.delete({ where: { id: session.id } });
+    return null;
+  }
+  return { ...session, token };
+}
+
+async function addAudit(session, action, entity, entityId = null, details = {}) {
+  await prisma.auditEvent.create({
+    data: {
+      actorId: session?.user?.id || null,
+      actorName: session?.user ? `${session.user.firstName} ${session.user.lastName}` : 'System',
+      action,
+      entity,
+      entityId,
+      details
+    }
+  });
 }
 
 function requireAdmin(session, response) {
-  if (!session || session.user?.role !== 'admin') {
+  if (!session || session.user.role !== 'admin') {
     send(response, session ? 403 : 401, { error: session ? 'Administrator access required.' : 'Please sign in.' });
     return false;
   }
   return true;
 }
 
-function validEmail(email) {
-  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+async function ensureInitialData() {
+  if (!seededAdmin.password) {
+    console.warn('ADMIN_INITIAL_PASSWORD is not configured; seeded admin login is disabled.');
+  } else {
+    const existingAdmin = await prisma.user.findUnique({ where: { email: seededAdmin.email } });
+    if (!existingAdmin) {
+      const credentials = hashPassword(seededAdmin.password);
+      await prisma.user.create({
+        data: {
+          firstName: seededAdmin.firstName,
+          lastName: seededAdmin.lastName,
+          email: seededAdmin.email,
+          role: 'admin',
+          passwordSalt: credentials.salt,
+          passwordHash: credentials.hash,
+          mustChangePassword: false
+        }
+      });
+    }
+  }
+
 }
 
 async function handle(request, response) {
   const url = new URL(request.url, 'http://localhost');
-  const session = getSession(request);
+  const session = await getSession(request);
 
-  if (session?.user?.mustChangePassword && ![
+  if (session?.user.mustChangePassword && ![
     '/api/auth/session',
     '/api/auth/change-password',
     '/api/auth/logout'
@@ -144,143 +155,41 @@ async function handle(request, response) {
   }
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
-    send(response, 200, { status: 'ok', service: 'imoka-pos-api' });
+    send(response, 200, { status: 'ok', service: 'imoka-pos-api', database: 'connected' });
     return;
-  }
-
-  if (request.method === 'POST' && url.pathname === '/api/shifts/close') {
-    if (!session?.user || session.user.role !== 'cashier') return send(response, 403, { error: 'Cashier access required.' });
-    const shift = session.shiftId && store.shifts.find(record => record.id === session.shiftId && !record.closedAt);
-    if (!shift) return send(response, 409, { error: 'There is no open shift to close.' });
-    shift.closedAt = new Date().toISOString();
-    shift.collected = store.sales.filter(sale => sale.shiftId === shift.id).reduce((total, sale) => total + sale.total, 0);
-    sessions.set(session.token, { userId: session.user.id, shiftId: null });
-    audit(session, 'shift.closed', 'shift', shift.id, { collected: shift.collected });
-    await persist();
-    send(response, 200, { shift });
-    return;
-  }
-
-  if (request.method === 'GET' && url.pathname === '/api/products') {
-    if (!session?.user) return send(response, 401, { error: 'Please sign in.' });
-    send(response, 200, { products: store.products });
-    return;
-  }
-
-  if (url.pathname.startsWith('/api/admin/products')) {
-    if (!requireAdmin(session, response)) return;
-
-    if (request.method === 'GET' && url.pathname === '/api/admin/products') {
-      send(response, 200, { products: store.products });
-      return;
-    }
-
-    if (request.method === 'POST' && url.pathname === '/api/admin/products') {
-      const body = await readBody(request);
-      const product = validateProduct(body);
-      if (!product) return send(response, 400, { error: 'Enter a product name, supported category, valid price and valid stock amount.' });
-      const id = `P${String(Math.max(0, ...store.products.map(item => Number(String(item.id).replace(/\D/g, '')) || 0)) + 1).padStart(3, '0')}`;
-      const created = { id, ...product };
-      store.products.push(created);
-      audit(session, 'product.created', 'product', created.id, { name: created.name });
-      await persist();
-      send(response, 201, { product: created });
-      return;
-    }
-
-    const productId = url.pathname.match(/^\/api\/admin\/products\/([^/]+)$/)?.[1];
-    if (productId && request.method === 'PUT') {
-      const existing = store.products.find(item => item.id === productId);
-      if (!existing) return send(response, 404, { error: 'Product not found.' });
-      const product = validateProduct(await readBody(request));
-      if (!product) return send(response, 400, { error: 'Enter a product name, supported category, valid price and valid stock amount.' });
-      Object.assign(existing, product);
-      audit(session, 'product.updated', 'product', existing.id, { name: existing.name });
-      await persist();
-      send(response, 200, { product: existing });
-      return;
-    }
-
-    if (productId && request.method === 'DELETE') {
-      const productIndex = store.products.findIndex(item => item.id === productId);
-      if (productIndex < 0) return send(response, 404, { error: 'Product not found.' });
-      audit(session, 'product.deleted', 'product', productId, { name: store.products[productIndex].name });
-      store.products.splice(productIndex, 1);
-      await persist();
-      send(response, 200, { ok: true });
-      return;
-    }
   }
 
   if (request.method === 'POST' && url.pathname === '/api/auth/login') {
     const body = await readBody(request);
     const email = String(body.email ?? body.username ?? '').trim().toLowerCase();
-    const user = store.users.find(record => record.email === email);
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user || typeof body.password !== 'string' || !passwordMatches(body.password, user)) {
       send(response, 401, { error: 'The email or password is incorrect.' });
       return;
     }
 
+    const activeShift = user.role === 'cashier' ? await prisma.shift.findFirst({ where: { userId: user.id, closedAt: null }, orderBy: { openedAt: 'desc' } }) : null;
     const token = randomBytes(32).toString('hex');
-    const shift = user.role === 'cashier' ? store.shifts.find(record => record.userId === user.id && !record.closedAt) : null;
-    sessions.set(token, { userId: user.id, shiftId: shift?.id || null });
-    audit({ user }, 'auth.login', 'user', user.id);
-    await persist();
+    await prisma.session.create({
+      data: {
+        tokenHash: hashToken(token),
+        userId: user.id,
+        shiftId: activeShift?.id || null,
+        expiresAt: new Date(Date.now() + sessionLifetimeMs)
+      }
+    });
+    await addAudit({ user }, 'auth.login', 'user', user.id);
     send(response, 200, { token, user: publicUser(user) });
     return;
   }
 
   if (request.method === 'GET' && url.pathname === '/api/auth/session') {
     if (!session?.user) return send(response, 401, { error: 'Please sign in.' });
+    if (session.user.role === 'cashier' && session.shiftId) {
+      const openShift = await prisma.shift.findFirst({ where: { id: session.shiftId, userId: session.userId, closedAt: null } });
+      if (!openShift) await prisma.session.update({ where: { id: session.id }, data: { shiftId: null } });
+    }
     send(response, 200, { user: publicUser(session.user) });
-    return;
-  }
-
-  if (request.method === 'POST' && url.pathname === '/api/auth/logout') {
-    if (session?.shiftId) {
-      const shift = store.shifts.find(record => record.id === session.shiftId && !record.closedAt);
-      if (shift) {
-        shift.closedAt = new Date().toISOString();
-        shift.collected = store.sales.filter(sale => sale.shiftId === shift.id).reduce((total, sale) => total + sale.total, 0);
-        audit(session, 'shift.closed', 'shift', shift.id, { collected: shift.collected, reason: 'logout' });
-        await persist();
-      }
-    }
-    if (session) sessions.delete(session.token);
-    send(response, 200, { ok: true });
-    return;
-  }
-
-  if (request.method === 'GET' && url.pathname === '/api/shifts/current') {
-    if (!session?.user || session.user.role !== 'cashier') return send(response, 403, { error: 'Cashier access required.' });
-    const shift = session.shiftId && store.shifts.find(record => record.id === session.shiftId && !record.closedAt);
-    send(response, 200, { shift: shift ? {
-      ...shift,
-      collected: store.sales.filter(sale => sale.shiftId === shift.id).reduce((total, sale) => total + sale.total, 0)
-    } : null });
-    return;
-  }
-
-  if (request.method === 'POST' && url.pathname === '/api/shifts/open') {
-    if (!session?.user || session.user.role !== 'cashier') return send(response, 403, { error: 'Cashier access required.' });
-    const existing = store.shifts.find(record => record.userId === session.user.id && !record.closedAt);
-    if (existing) {
-      sessions.set(session.token, { userId: session.user.id, shiftId: existing.id });
-      return send(response, 200, { shift: existing });
-    }
-    const shift = {
-      id: randomUUID(),
-      userId: session.user.id,
-      userName: `${session.user.firstName} ${session.user.lastName}`,
-      openedAt: new Date().toISOString(),
-      closedAt: null,
-      collected: 0
-    };
-    store.shifts.push(shift);
-    sessions.set(session.token, { userId: session.user.id, shiftId: shift.id });
-    audit(session, 'shift.opened', 'shift', shift.id);
-    await persist();
-    send(response, 201, { shift });
     return;
   }
 
@@ -295,51 +204,144 @@ async function handle(request, response) {
       return send(response, 400, { error: 'Use 10-128 characters with uppercase, lowercase and a number.' });
     }
     const credentials = hashPassword(password);
-    session.user.passwordSalt = credentials.salt;
-    session.user.passwordHash = credentials.hash;
-    session.user.mustChangePassword = false;
-    audit(session, 'user.password_changed', 'user', session.user.id);
-    await persist();
-    send(response, 200, { user: publicUser(session.user) });
+    const updated = await prisma.user.update({
+      where: { id: session.user.id },
+      data: { passwordSalt: credentials.salt, passwordHash: credentials.hash, mustChangePassword: false }
+    });
+    await addAudit(session, 'user.password_changed', 'user', updated.id);
+    send(response, 200, { user: publicUser(updated) });
     return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/auth/logout') {
+    if (session) {
+      await addAudit(session, 'auth.logout', 'user', session.userId);
+      await prisma.session.delete({ where: { id: session.id } });
+    }
+    send(response, 200, { ok: true });
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname === '/api/products') {
+    if (!session?.user) return send(response, 401, { error: 'Please sign in.' });
+    const products = await prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+    send(response, 200, { products: products.map(product => ({ ...product, price: Number(product.price) })) });
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/shifts/')) {
+    if (!session?.user || session.user.role !== 'cashier') return send(response, 403, { error: 'Cashier access required.' });
+
+    if (request.method === 'GET' && url.pathname === '/api/shifts/current') {
+      const shift = await prisma.shift.findFirst({
+        where: { userId: session.userId, closedAt: null },
+        include: { sales: { select: { total: true } } },
+        orderBy: { openedAt: 'desc' }
+      });
+      if (shift && session.shiftId !== shift.id) await prisma.session.update({ where: { id: session.id }, data: { shiftId: shift.id } });
+      if (!shift && session.shiftId) await prisma.session.update({ where: { id: session.id }, data: { shiftId: null } });
+      const collected = shift?.sales.reduce((sum, sale) => sum + Number(sale.total), 0) || 0;
+      send(response, 200, { shift: shift ? { id: shift.id, userId: shift.userId, userName: `${session.user.firstName} ${session.user.lastName}`, openedAt: shift.openedAt, closedAt: shift.closedAt, collected } : null });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/shifts/open') {
+      let existing = await prisma.shift.findFirst({ where: { userId: session.userId, closedAt: null }, orderBy: { openedAt: 'desc' } });
+      let shift = existing;
+      if (!shift) {
+        try {
+          shift = await prisma.shift.create({ data: { userId: session.userId } });
+        } catch (error) {
+          if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error;
+          existing = await prisma.shift.findFirst({ where: { userId: session.userId, closedAt: null }, orderBy: { openedAt: 'desc' } });
+          if (!existing) throw error;
+          shift = existing;
+        }
+      }
+      await prisma.session.update({ where: { id: session.id }, data: { shiftId: shift.id } });
+      if (!existing) await addAudit(session, 'shift.opened', 'shift', shift.id);
+      send(response, existing ? 200 : 201, { shift: { id: shift.id, userId: shift.userId, userName: `${session.user.firstName} ${session.user.lastName}`, openedAt: shift.openedAt, closedAt: shift.closedAt, collected: 0 } });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/shifts/close') {
+      if (!session.shiftId) return send(response, 409, { error: 'There is no open shift to close.' });
+      const closed = await prisma.$transaction(async transaction => {
+        const shift = await transaction.shift.findFirst({ where: { id: session.shiftId, userId: session.userId, closedAt: null } });
+        if (!shift) return null;
+        const sales = await transaction.sale.findMany({ where: { shiftId: shift.id }, select: { total: true } });
+        const collected = sales.reduce((sum, sale) => sum + Number(sale.total), 0);
+        const updatedShift = await transaction.shift.update({ where: { id: shift.id }, data: { closedAt: new Date() } });
+        await transaction.session.updateMany({ where: { shiftId: shift.id }, data: { shiftId: null } });
+        return { shift: updatedShift, collected };
+      });
+      if (!closed) return send(response, 409, { error: 'There is no open shift to close.' });
+      await addAudit(session, 'shift.closed', 'shift', closed.shift.id, { collected: closed.collected });
+      send(response, 200, { shift: { ...closed.shift, collected: closed.collected } });
+      return;
+    }
   }
 
   if (request.method === 'POST' && url.pathname === '/api/sales') {
     if (!session?.user || !['cashier', 'admin'].includes(session.user.role)) return send(response, 401, { error: 'Please sign in.' });
-    if (session.user.role === 'cashier' && (!session.shiftId || !store.shifts.some(shift => shift.id === session.shiftId && !shift.closedAt))) {
-      return send(response, 409, { error: 'Open a shift before recording sales.' });
+    if (session.user.role === 'cashier') {
+      const activeShift = session.shiftId ? await prisma.shift.findFirst({ where: { id: session.shiftId, userId: session.userId, closedAt: null } }) : null;
+      if (!activeShift) {
+        await prisma.session.update({ where: { id: session.id }, data: { shiftId: null } });
+        return send(response, 409, { error: 'Open a shift before recording sales.' });
+      }
     }
     const body = await readBody(request);
     const total = Number(body.total);
-    if (!Number.isFinite(total) || total < 0 || typeof body.date !== 'string' || typeof body.receiptNo !== 'string') {
+    if (!Number.isFinite(total) || total < 0 || typeof body.date !== 'string' || typeof body.receiptNo !== 'string' || !Array.isArray(body.items) || !body.items.length) {
       return send(response, 400, { error: 'Sale data is invalid.' });
     }
-    const saleId = `${session.user.id}:${String(body.id || randomUUID())}`;
-    if (store.sales.some(sale => sale.id === saleId)) return send(response, 200, { ok: true, duplicate: true });
-    if (!Array.isArray(body.items) || body.items.length === 0) return send(response, 400, { error: 'A sale must contain at least one item.' });
-    const soldItems = [];
-    for (const item of body.items) {
-      const product = store.products.find(record => record.id === String(item.id));
-      const quantity = Number(item.qty);
-      if (!product || !Number.isInteger(quantity) || quantity < 1) return send(response, 400, { error: 'A sale contains an invalid product or quantity.' });
-      if (product.stockTracked !== false && quantity > product.stock) return send(response, 409, { error: `${product.name} does not have enough stock.` });
-      soldItems.push({ product, quantity });
+    const clientSaleId = String(body.id || randomUUID());
+    const existing = await prisma.sale.findUnique({ where: { cashierId_clientSaleId: { cashierId: session.userId, clientSaleId } } });
+    if (existing) return send(response, 200, { ok: true, duplicate: true });
+
+    try {
+      const sale = await prisma.$transaction(async transaction => {
+        const saleItems = [];
+        for (const item of body.items) {
+          const quantity = Number(item.qty);
+          if (!Number.isInteger(quantity) || quantity < 1) throw new Error('A sale contains an invalid quantity.');
+          const product = await transaction.product.findUnique({ where: { id: String(item.id) } });
+          if (!product || !product.active) throw new Error('A sale contains an invalid product.');
+          if (product.stockTracked) {
+            const update = await transaction.product.updateMany({ where: { id: product.id, stock: { gte: quantity } }, data: { stock: { decrement: quantity } } });
+            if (update.count !== 1) throw new Error(`${product.name} does not have enough stock.`);
+          }
+          saleItems.push({ productId: product.id, name: product.name, price: product.price, quantity });
+        }
+        const createdSale = await transaction.sale.create({
+          data: {
+            clientSaleId,
+            receiptNo: body.receiptNo.slice(0, 80),
+            cashierId: session.userId,
+            shiftId: session.shiftId,
+            customerName: String(body.customerName || '').slice(0, 160),
+            payment: String(body.payment || '').slice(0, 40),
+            subtotal: new Prisma.Decimal(Number(body.subtotal || 0)),
+            discount: new Prisma.Decimal(Number(body.discount || 0)),
+            tax: new Prisma.Decimal(Number(body.tax || 0)),
+            total: new Prisma.Decimal(total),
+            paid: new Prisma.Decimal(Number(body.paid || 0)),
+            change: new Prisma.Decimal(Number(body.change || 0)),
+            createdAt: new Date(body.date),
+            items: { create: saleItems }
+          }
+        });
+        const updatedProducts = await transaction.product.findMany({ where: { id: { in: saleItems.map(item => item.productId) } }, select: { id: true, stock: true, stockTracked: true } });
+        return { createdSale, updatedProducts };
+      });
+      await addAudit(session, 'sale.completed', 'sale', sale.createdSale.id, { receiptNo: sale.createdSale.receiptNo, total: Number(sale.createdSale.total) });
+      send(response, 201, { ok: true, products: sale.updatedProducts });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return send(response, 200, { ok: true, duplicate: true });
+      if (error.message.includes('stock') || error.message.includes('product') || error.message.includes('quantity')) return send(response, 409, { error: error.message });
+      throw error;
     }
-    for (const { product, quantity } of soldItems) {
-      if (product.stockTracked !== false) product.stock = Math.max(0, product.stock - quantity);
-    }
-    store.sales.push({
-      id: saleId,
-      receiptNo: body.receiptNo.slice(0, 80),
-      date: body.date,
-      customerName: String(body.customerName || '').slice(0, 160),
-      payment: String(body.payment || '').slice(0, 40),
-      total,
-      shiftId: session.shiftId
-    });
-    audit(session, 'sale.completed', 'sale', saleId, { receiptNo: body.receiptNo.slice(0, 80), total });
-    await persist();
-    send(response, 201, { ok: true });
     return;
   }
 
@@ -347,27 +349,30 @@ async function handle(request, response) {
     if (!requireAdmin(session, response)) return;
 
     if (request.method === 'GET' && url.pathname === '/api/admin/dashboard') {
-      const today = new Date().toISOString().slice(0, 10);
-      const todaySales = store.sales.filter(sale => sale.date.slice(0, 10) === today);
-      send(response, 200, {
-        totalUsers: store.users.length,
-        salesToday: todaySales.reduce((total, sale) => total + sale.total, 0),
-        transactionsToday: todaySales.length,
-        openShifts: store.shifts.filter(shift => !shift.closedAt).length
-      });
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const [totalUsers, sales, transactionsToday, openShifts] = await Promise.all([
+        prisma.user.count(),
+        prisma.sale.aggregate({ where: { createdAt: { gte: start } }, _sum: { total: true } }),
+        prisma.sale.count({ where: { createdAt: { gte: start } } }),
+        prisma.shift.count({ where: { closedAt: null } })
+      ]);
+      send(response, 200, { totalUsers, salesToday: Number(sales._sum.total || 0), transactionsToday, openShifts });
       return;
     }
 
     if (request.method === 'GET' && url.pathname === '/api/admin/users') {
-      const search = (url.searchParams.get('search') || '').trim().toLowerCase();
+      const search = (url.searchParams.get('search') || '').trim();
       const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
-      const filtered = store.users
-        .filter(user => `${user.firstName} ${user.lastName} ${user.email} ${user.role}`.toLowerCase().includes(search))
-        .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+      const searchableFields = ['firstName', 'lastName', 'email'].map(field => ({ [field]: { contains: search, mode: 'insensitive' } }));
+      if (search.toLowerCase() === 'admin' || search.toLowerCase() === 'cashier') searchableFields.push({ role: search.toLowerCase() });
+      const where = search ? { OR: searchableFields } : {};
       const perPage = 15;
-      const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
-      const safePage = Math.min(page, pageCount);
-      send(response, 200, { users: filtered.slice((safePage - 1) * perPage, safePage * perPage).map(publicUser), page: safePage, pageCount, total: filtered.length });
+      const [total, records] = await Promise.all([
+        prisma.user.count({ where }),
+        prisma.user.findMany({ where, orderBy: { createdAt: 'asc' }, skip: (page - 1) * perPage, take: perPage })
+      ]);
+      send(response, 200, { users: records.map(publicUser), page, pageCount: Math.max(1, Math.ceil(total / perPage)), total });
       return;
     }
 
@@ -376,64 +381,181 @@ async function handle(request, response) {
       const firstName = String(body.firstName || '').trim();
       const lastName = String(body.lastName || '').trim();
       const email = String(body.email || '').trim().toLowerCase();
-      if (firstName.length < 1 || firstName.length > 80 || lastName.length < 1 || lastName.length > 80 || !validEmail(email)) {
-        return send(response, 400, { error: 'Enter a valid first name, last name and email address.' });
-      }
-      if (store.users.some(user => user.email === email)) return send(response, 409, { error: 'A user with this email already exists.' });
+      if (!firstName || firstName.length > 80 || !lastName || lastName.length > 80 || !validEmail(email)) return send(response, 400, { error: 'Enter a valid first name, last name and email address.' });
       const password = lastName.toLocaleUpperCase();
       const credentials = hashPassword(password);
-      const user = {
-        id: randomUUID(), firstName, lastName, email, role: 'cashier',
-        passwordSalt: credentials.salt, passwordHash: credentials.hash, mustChangePassword: true, createdAt: new Date().toISOString()
-      };
-      store.users.push(user);
-      audit(session, 'user.created', 'user', user.id, { email: user.email, role: user.role });
-      await persist();
-      send(response, 201, { user: publicUser(user), initialPassword: password });
+      try {
+        const user = await prisma.user.create({ data: { firstName, lastName, email, role: 'cashier', passwordSalt: credentials.salt, passwordHash: credentials.hash, mustChangePassword: true } });
+        await addAudit(session, 'user.created', 'user', user.id, { email, role: user.role });
+        send(response, 201, { user: publicUser(user), initialPassword: password });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return send(response, 409, { error: 'A user with this email already exists.' });
+        throw error;
+      }
+      return;
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/admin/products') {
+      const products = await prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+      send(response, 200, { products: products.map(product => ({ ...product, price: Number(product.price) })) });
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/admin/products') {
+      const input = validateProduct(await readBody(request));
+      if (!input) return send(response, 400, { error: 'Enter a product name, supported category, valid price and valid stock amount.' });
+      const sku = `P-${randomUUID().slice(0, 8).toUpperCase()}`;
+      const product = await prisma.product.create({ data: { ...input, sku } });
+      await addAudit(session, 'product.created', 'product', product.id, { name: product.name });
+      send(response, 201, { product: { ...product, price: Number(product.price) } });
+      return;
+    }
+
+    const productId = url.pathname.match(/^\/api\/admin\/products\/([^/]+)$/)?.[1];
+    if (productId && request.method === 'PUT') {
+      const input = validateProduct(await readBody(request));
+      if (!input) return send(response, 400, { error: 'Enter a product name, supported category, valid price and valid stock amount.' });
+      const product = await prisma.product.update({ where: { id: productId }, data: input });
+      await addAudit(session, 'product.updated', 'product', product.id, { name: product.name });
+      send(response, 200, { product: { ...product, price: Number(product.price) } });
+      return;
+    }
+
+    if (productId && request.method === 'DELETE') {
+      const product = await prisma.product.update({ where: { id: productId }, data: { active: false } });
+      await addAudit(session, 'product.archived', 'product', product.id, { name: product.name });
+      send(response, 200, { ok: true });
       return;
     }
 
     if (request.method === 'GET' && url.pathname === '/api/admin/shifts') {
-      const shifts = store.shifts.map(shift => ({
-        ...shift,
-        collected: store.sales.filter(sale => sale.shiftId === shift.id).reduce((total, sale) => total + sale.total, 0)
-      })).sort((left, right) => right.openedAt.localeCompare(left.openedAt));
-      send(response, 200, { shifts });
+      const shifts = await prisma.shift.findMany({ include: { user: true, sales: { select: { total: true } } }, orderBy: { openedAt: 'desc' } });
+      send(response, 200, { shifts: shifts.map(shift => ({ id: shift.id, userId: shift.userId, userName: `${shift.user.firstName} ${shift.user.lastName}`, openedAt: shift.openedAt, closedAt: shift.closedAt, collected: shift.sales.reduce((sum, sale) => sum + Number(sale.total), 0) })) });
       return;
     }
 
     if (request.method === 'GET' && url.pathname === '/api/admin/audit') {
       const limit = Math.min(200, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '100', 10) || 100));
-      send(response, 200, { events: store.audit.slice(-limit).reverse() });
+      const events = await prisma.auditEvent.findMany({ take: limit, orderBy: { createdAt: 'desc' } });
+      send(response, 200, { events });
       return;
     }
 
     if (request.method === 'GET' && url.pathname === '/api/admin/backup') {
-      audit(session, 'backup.exported', 'database');
-      await persist();
-      send(response, 200, { format: 'imoka-backup-v1', exportedAt: new Date().toISOString(), data: store });
+      await addAudit(session, 'backup.exported', 'database');
+      const [users, products, shifts, sales, audit] = await Promise.all([
+        prisma.user.findMany(), prisma.product.findMany(), prisma.shift.findMany(),
+        prisma.sale.findMany({ include: { items: true } }), prisma.auditEvent.findMany({ orderBy: { createdAt: 'asc' } })
+      ]);
+      const backupData = {
+        users: users.map(user => ({ ...publicUser(user), passwordSalt: user.passwordSalt, passwordHash: user.passwordHash })),
+        products: products.map(product => ({ ...product, price: Number(product.price) })),
+        shifts,
+        sales: sales.map(sale => ({ ...sale, subtotal: Number(sale.subtotal), discount: Number(sale.discount), tax: Number(sale.tax), total: Number(sale.total), paid: Number(sale.paid), change: Number(sale.change), items: sale.items.map(item => ({ ...item, price: Number(item.price) })) })),
+        audit
+      };
+      send(response, 200, { format: 'imoka-backup-v1', exportedAt: new Date().toISOString(), data: backupData });
       return;
     }
 
     if (request.method === 'POST' && url.pathname === '/api/admin/backup/restore') {
       const body = await readBody(request);
       const backup = body?.data;
-      if (body?.format !== 'imoka-backup-v1' || !backup || !Array.isArray(backup.users) || !Array.isArray(backup.sales) || !Array.isArray(backup.shifts) || !Array.isArray(backup.products)) {
+      if (body?.format !== 'imoka-backup-v1' || !backup || !Array.isArray(backup.users) || !Array.isArray(backup.sales) || !Array.isArray(backup.shifts) || !Array.isArray(backup.products) || !Array.isArray(backup.audit)) {
         return send(response, 400, { error: 'This backup file is not a valid Imoka backup.' });
       }
-      if (!backup.users.some(record => record.email === seededAdmin.email && record.role === 'admin')) {
+      if (!backup.users.some(user => user.email === seededAdmin.email && user.role === 'admin')) {
         return send(response, 400, { error: 'Backup must contain the seeded administrator account.' });
       }
-      store = {
-        users: backup.users,
-        sales: backup.sales,
-        shifts: backup.shifts,
-        products: backup.products,
-        audit: Array.isArray(backup.audit) ? backup.audit : []
-      };
-      audit(session, 'backup.restored', 'database', null, { exportedAt: body.exportedAt || null });
-      await persist();
-      sessions.clear();
+      try {
+        await prisma.$transaction(async transaction => {
+          await transaction.auditEvent.deleteMany();
+          await transaction.session.deleteMany();
+          await transaction.saleItem.deleteMany();
+          await transaction.sale.deleteMany();
+          await transaction.shift.deleteMany();
+          await transaction.product.deleteMany();
+          await transaction.user.deleteMany();
+
+          if (backup.users.length) await transaction.user.createMany({ data: backup.users.map(user => ({
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            passwordSalt: user.passwordSalt,
+            passwordHash: user.passwordHash,
+            mustChangePassword: Boolean(user.mustChangePassword),
+            createdAt: new Date(user.createdAt)
+          })) });
+          if (backup.products.length) await transaction.product.createMany({ data: backup.products.map(product => ({
+            id: product.id,
+            sku: product.sku,
+            name: product.name,
+            category: product.category,
+            price: new Prisma.Decimal(product.price),
+            stockTracked: product.stockTracked !== false,
+            stock: Number(product.stock || 0),
+            active: product.active !== false,
+            createdAt: new Date(product.createdAt),
+            updatedAt: new Date(product.updatedAt || product.createdAt)
+          })) });
+          if (backup.shifts.length) await transaction.shift.createMany({ data: backup.shifts.map(shift => ({
+            id: shift.id,
+            userId: shift.userId,
+            openedAt: new Date(shift.openedAt),
+            closedAt: shift.closedAt ? new Date(shift.closedAt) : null
+          })) });
+          if (backup.sales.length) await transaction.sale.createMany({ data: backup.sales.map(sale => ({
+            id: sale.id,
+            clientSaleId: sale.clientSaleId || sale.id,
+            receiptNo: sale.receiptNo,
+            cashierId: sale.cashierId,
+            shiftId: sale.shiftId || null,
+            customerName: sale.customerName || '',
+            payment: sale.payment,
+            subtotal: new Prisma.Decimal(sale.subtotal || sale.total),
+            discount: new Prisma.Decimal(sale.discount || 0),
+            tax: new Prisma.Decimal(sale.tax || 0),
+            total: new Prisma.Decimal(sale.total),
+            paid: new Prisma.Decimal(sale.paid || 0),
+            change: new Prisma.Decimal(sale.change || 0),
+            createdAt: new Date(sale.createdAt || sale.date)
+          })) });
+          const saleItems = backup.sales.flatMap(sale => (sale.items || []).map(item => ({
+            id: item.id || randomUUID(),
+            saleId: sale.id,
+            productId: item.productId || null,
+            name: item.name,
+            price: new Prisma.Decimal(item.price),
+            quantity: Number(item.quantity)
+          })));
+          if (saleItems.length) await transaction.saleItem.createMany({ data: saleItems });
+          if (backup.audit.length) await transaction.auditEvent.createMany({ data: backup.audit.map(event => ({
+            id: event.id,
+            actorId: event.actorId || null,
+            actorName: event.actorName,
+            action: event.action,
+            entity: event.entity,
+            entityId: event.entityId || null,
+            details: event.details || {},
+            createdAt: new Date(event.createdAt)
+          })) });
+        });
+      } catch (restoreError) {
+        if (restoreError instanceof Prisma.PrismaClientKnownRequestError && restoreError.code === 'P2002') {
+          return send(response, 400, { error: 'Backup contains duplicate unique values.' });
+        }
+        throw restoreError;
+      }
+      await prisma.auditEvent.create({ data: {
+        actorId: null,
+        actorName: `${session.user.firstName} ${session.user.lastName}`,
+        action: 'backup.restored',
+        entity: 'database',
+        details: { exportedAt: body.exportedAt || null }
+      } });
+      await prisma.session.deleteMany();
       send(response, 200, { ok: true, restoredAt: new Date().toISOString() });
       return;
     }
@@ -442,32 +564,37 @@ async function handle(request, response) {
   send(response, 404, { error: 'Route not found.' });
 }
 
-function validateProduct(body) {
-  const categories = ['Printing', 'Branding', 'Stationary', 'Internet', 'Graphics'];
-  const name = String(body.name || '').trim();
-  const category = String(body.category || '');
-  const price = Number(body.price);
-  const stockTracked = body.stockTracked !== false;
-  const stock = stockTracked ? Number(body.stock) : 0;
-  if (!name || name.length > 160 || !categories.includes(category) || !Number.isFinite(price) || price < 0 || !Number.isFinite(stock) || stock < 0) return null;
-  return { name, category, price, stockTracked, stock };
+async function ensureSeedData() {
+  await ensureInitialData();
 }
 
 const server = createServer(async (request, response) => {
+  if (!setCors(request, response)) return send(response, 403, { error: 'Origin is not allowed.' });
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204);
+    response.end();
+    return;
+  }
   try {
     await handle(request, response);
   } catch (error) {
-    const status = error instanceof SyntaxError ? 400 : error.message === 'Request body is too large.' ? 413 : 500;
+    const status = error instanceof SyntaxError ? 400 : error.message === 'Request body is too large.' ? 413 : error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025' ? 404 : 500;
     send(response, status, { error: status === 500 ? 'An internal server error occurred.' : error.message });
     if (status === 500) console.error(error);
   }
 });
 
-loadStore().then(() => {
-  server.listen(port, '0.0.0.0', () => {
-    console.log(`Imoka POS API listening on port ${port}`);
-  });
+ensureSeedData().then(() => {
+  server.listen(port, '0.0.0.0', () => console.log(`Imoka POS API listening on port ${port}`));
 }).catch(error => {
-  console.error('Failed to initialize API data store.', error);
+  console.error('Failed to initialize API.', error);
   process.exitCode = 1;
 });
+
+async function shutdown() {
+  server.close();
+  await prisma.$disconnect();
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

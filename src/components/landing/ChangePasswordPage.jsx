@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { LockKeyhole } from 'lucide-react';
+import { apiUrl } from '../../api.js';
 
 export default function ChangePasswordPage({ onPasswordChanged }) {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -22,7 +23,7 @@ export default function ChangePasswordPage({ onPasswordChanged }) {
     setSaving(true);
     setError('');
     try {
-      const response = await fetch('/api/auth/change-password', {
+      const response = await fetch(apiUrl('/api/auth/change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

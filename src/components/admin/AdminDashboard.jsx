@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, Clock3, Download, FileClock, LayoutDashboard, LogOut, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
+import { apiUrl } from '../../api.js';
 
-const API = '/api';
 const money = value => `TZS ${Number(value || 0).toLocaleString('en-TZ', { maximumFractionDigits: 2 })}`;
 const dateTime = value => value ? new Date(value).toLocaleString() : 'In progress';
 
 async function request(path, token, options = {}) {
-  const response = await fetch(`${API}${path}`, {
+  const response = await fetch(apiUrl(`/api${path}`), {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,

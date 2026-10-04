@@ -1,4 +1,5 @@
 import { buttonClass, deleteButtonClass, editButtonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, smallButtonClass } from './src/uiClasses.js';
+import { apiUrl } from './src/api.js';
 
 export function initializeLegacyApp() {
 const KEY = 'imoka_pos_v1';
@@ -119,7 +120,7 @@ async function renderShift() {
 
     status.textContent = 'Checking shift status...';
     try {
-        const response = await fetch('/api/shifts/current', { headers: { Authorization: `Bearer ${token}` } });
+        const response = await fetch(apiUrl('/api/shifts/current'), { headers: { Authorization: `Bearer ${token}` } });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'Unable to check shift status.');
         currentShift = result.shift;
@@ -153,7 +154,7 @@ async function openShift() {
     const button = document.getElementById('openShiftButton');
     button.disabled = true;
     try {
-        const response = await fetch('/api/shifts/open', {
+        const response = await fetch(apiUrl('/api/shifts/open'), {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -176,7 +177,7 @@ async function closeShift() {
     const button = document.getElementById('closeShiftButton');
     button.disabled = true;
     try {
-        const response = await fetch('/api/shifts/close', {
+        const response = await fetch(apiUrl('/api/shifts/close'), {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -196,7 +197,7 @@ async function loadProducts() {
     const token = sessionStorage.getItem('imoka_pos_token');
     if (!token) return;
     try {
-        const response = await fetch('/api/products', { headers: { Authorization: `Bearer ${token}` } });
+        const response = await fetch(apiUrl('/api/products'), { headers: { Authorization: `Bearer ${token}` } });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'Unable to load products.');
         db.products = result.products;
@@ -358,7 +359,7 @@ function saveSale(printIt) {
     saveDB();
     const token = sessionStorage.getItem('imoka_pos_token');
     if (token) {
-        fetch('/api/sales', {
+        fetch(apiUrl('/api/sales'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -367,6 +368,15 @@ function saveSale(printIt) {
             body: JSON.stringify(sale)
         }).then(response => {
             if (!response.ok) throw new Error('Sale sync failed');
+            return response.json();
+        }).then(async response => {
+            const result = await response.json();
+            if (result.duplicate) return;
+            result.products?.forEach(updatedProduct => {
+                const product = db.products.find(item => item.id === updatedProduct.id);
+                if (product) product.stock = updatedProduct.stock;
+            });
+            saveDB();
         }).catch(() => toast('Sale saved locally, but could not sync to admin reports'));
     }
     cart = [];

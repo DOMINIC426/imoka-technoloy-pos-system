@@ -4,6 +4,7 @@ import AdminDashboard from './components/admin/AdminDashboard.jsx';
 import ChangePasswordPage from './components/landing/ChangePasswordPage.jsx';
 import LoginPage from './components/landing/LoginPage.jsx';
 import LandingPage from './components/landing/LandingPage.jsx';
+import { apiUrl } from './api.js';
 
 export default function LandingApp() {
   const [route, setRoute] = useState('home');
@@ -29,7 +30,7 @@ export default function LandingApp() {
       }
 
       try {
-        const response = await fetch('/api/auth/session', { headers: { Authorization: `Bearer ${token}` } });
+        const response = await fetch(apiUrl('/api/auth/session'), { headers: { Authorization: `Bearer ${token}` } });
         if (!response.ok) throw new Error('Session expired.');
         const result = await response.json();
         const authorizedRoute = result.user.mustChangePassword ? 'change-password' : result.user.role === 'admin' ? 'admin' : 'pos';
@@ -63,7 +64,7 @@ export default function LandingApp() {
   if (route === 'admin' && user?.role === 'admin') {
     const signOut = async () => {
       const token = sessionStorage.getItem('imoka_pos_token');
-      try { await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); }
+      try { await fetch(apiUrl('/api/auth/logout'), { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); }
       finally {
         sessionStorage.removeItem('imoka_pos_token');
         sessionStorage.removeItem('imoka_pos_user');

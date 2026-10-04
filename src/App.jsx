@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { initializeLegacyApp } from '../imkoka.js';
+import { apiUrl } from './api.js';
 import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, panelClass, smallButtonClass, tableClass } from './uiClasses.js';
 
 const navButtonClass = 'flex w-full items-center gap-3 rounded-lg border border-teal-800 bg-teal-800 px-3.5 py-3 text-left text-sm text-white transition-colors hover:border-teal-700 hover:bg-teal-700 [&.active]:border-teal-500 [&.active]:bg-teal-600 [&.active]:ring-1 [&.active]:ring-teal-300';
@@ -12,7 +13,7 @@ export default function App() {
   async function signOut() {
     const token = sessionStorage.getItem('imoka_pos_token');
     try {
-      await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      await fetch(apiUrl('/api/auth/logout'), { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
     } finally {
       sessionStorage.removeItem('imoka_pos_token');
       sessionStorage.removeItem('imoka_pos_user');

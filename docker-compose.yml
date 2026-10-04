@@ -16,9 +16,10 @@ services:
       dockerfile: Dockerfile
     environment:
       PORT: 3000
-      DATA_FILE: /app/data/database.json
-    volumes:
-      - imoka_data:/app/data
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
     expose:
       - "3000"
     healthcheck:
@@ -27,6 +28,3 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
-
-volumes:
-  imoka_data:
