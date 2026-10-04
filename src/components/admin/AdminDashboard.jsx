@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, Clock3, Download, FileClock, LayoutDashboard, LogOut, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock3, Download, FileClock, Home, LayoutDashboard, LogOut, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import { apiUrl } from '../../api.js';
+import { confirmAction, FeedbackProvider } from '../ui/FeedbackProvider.jsx';
 
 const money = value => `TZS ${Number(value || 0).toLocaleString('en-TZ', { maximumFractionDigits: 2 })}`;
 const dateTime = value => value ? new Date(value).toLocaleString() : 'In progress';
@@ -29,9 +31,19 @@ const navItems = [
 ];
 
 const categories = ['Printing', 'Branding', 'Stationary', 'Internet', 'Graphics'];
+const navGroups = [
+  { title: 'Workspace', ids: ['dashboard', 'users', 'products'] },
+  { title: 'Operations', ids: ['shifts', 'audit', 'backup'] }
+];
 
 export default function AdminDashboard({ token, user, onSignOut }) {
+  return <FeedbackProvider><AdminDashboardContent token={token} user={user} onSignOut={onSignOut} /></FeedbackProvider>;
+}
+
+function AdminDashboardContent({ token, user, onSignOut }) {
   const [activePage, setActivePage] = useState('dashboard');
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => localStorage.getItem('imoka_admin_sidebar_collapsed') !== 'true');
+  const [navSearch, setNavSearch] = useState('');
   const [summary, setSummary] = useState(null);
   const [users, setUsers] = useState({ users: [], page: 1, pageCount: 1, total: 0 });
   const [shifts, setShifts] = useState([]);
@@ -50,6 +62,14 @@ export default function AdminDashboard({ token, user, onSignOut }) {
   const [auditEvents, setAuditEvents] = useState([]);
   const [restoring, setRestoring] = useState(false);
   const [backupMessage, setBackupMessage] = useState('');
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 700px)');
+    const syncSidebar = event => setSidebarExpanded(!event.matches && localStorage.getItem('imoka_admin_sidebar_collapsed') !== 'true');
+    syncSidebar(media);
+    media.addEventListener('change', syncSidebar);
+    return () => media.removeEventListener('change', syncSidebar);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,7 +175,7 @@ export default function AdminDashboard({ token, user, onSignOut }) {
   }
 
   async function deleteProduct(product) {
-    if (!window.confirm(`Delete ${product.name}? Cashiers will no longer be able to sell it.`)) return;
+    if (!await confirmAction({ title: 'Archive this product?', message: `Cashiers will no longer be able to sell ${product.name}. Existing sales will remain in reports.`, confirmLabel: 'Archive product', destructive: true })) return;
     try {
       await request(`/admin/products/${encodeURIComponent(product.id)}`, token, { method: 'DELETE' });
       setProducts(current => current.filter(item => item.id !== product.id));
@@ -184,7 +204,7 @@ export default function AdminDashboard({ token, user, onSignOut }) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (!window.confirm('Restore this backup? It will replace current users, sales, shifts and products. This cannot be undone.')) return;
+    if (!await confirmAction({ title: 'Restore this backup?', message: 'This replaces current users, sales, shifts and products. This cannot be undone.', confirmLabel: 'Restore data', destructive: true })) return;
     setRestoring(true);
     setBackupMessage('');
     try {
@@ -201,27 +221,37 @@ export default function AdminDashboard({ token, user, onSignOut }) {
     }
   }
 
+  const navById = new Map(navItems.map(item => [item.id, item]));
+  const filteredGroups = navGroups.map(group => ({
+    ...group,
+    items: group.ids.map(id => navById.get(id)).filter(item => item.label.toLowerCase().includes(navSearch.toLowerCase()))
+  })).filter(group => group.items.length);
+
+  function toggleSidebar() {
+    setSidebarExpanded(value => {
+      localStorage.setItem('imoka_admin_sidebar_collapsed', String(!value));
+      return !value;
+    });
+  }
+
   return (
     <div className="min-h-screen bg-[#edf2ef] text-gray-900">
-      <aside className="fixed inset-y-0 left-0 z-20 flex w-[250px] flex-col bg-[#174e46] px-4 py-6 text-white max-[700px]:w-[72px] max-[700px]:px-2">
-        <a href="#home" className="mb-8 flex items-center gap-3 border-b border-white/15 px-2 pb-6 text-white no-underline max-[700px]:justify-center max-[700px]:px-0">
-          <span className="grid size-10 shrink-0 place-items-center rounded-md bg-[#d2e7db] text-lg font-bold text-[#174e46]">I</span>
-          <span className="max-[700px]:hidden"><strong className="block tracking-wide">IMOKA</strong><small className="text-[9px] tracking-[.18em] text-white/65">ADMINISTRATION</small></span>
-        </a>
-        <nav className="grid gap-1.5" aria-label="Admin navigation">
-          {navItems.map(({ id, label, icon: Icon }) => (
-            <button key={id} type="button" onClick={() => setActivePage(id)} className={`flex w-full items-center gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors max-[700px]:justify-center max-[700px]:px-0 ${activePage === id ? 'border-[#78ad91] bg-[#367c69] text-white' : 'border-transparent bg-[#205c52] text-white/85 hover:bg-[#2d6e61]'}`} aria-current={activePage === id ? 'page' : undefined} title={label}>
-              <Icon size={18} aria-hidden="true" /><span className="max-[700px]:hidden">{label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="mt-auto border-t border-white/15 pt-4">
-          <p className="mb-3 truncate px-2 text-xs text-white/75 max-[700px]:hidden">{user.firstName} {user.lastName}</p>
-          <button type="button" onClick={onSignOut} className="flex w-full items-center gap-3 rounded-lg px-3.5 py-3 text-left text-sm text-white/85 transition-colors hover:bg-[#2d6e61] max-[700px]:justify-center max-[700px]:px-0" title="Sign out"><LogOut size={18} /><span className="max-[700px]:hidden">Sign out</span></button>
+      <motion.aside animate={{ width: sidebarExpanded ? 268 : 82 }} transition={{ type: 'spring', stiffness: 320, damping: 32 }} className="fixed inset-y-3 left-3 z-20 flex flex-col overflow-visible rounded-2xl border border-white/80 bg-[#174e46] px-3 py-4 text-white shadow-[0_22px_70px_rgba(12,49,40,0.3)]">
+        <div className={`flex h-12 items-center ${sidebarExpanded ? 'justify-between px-1' : 'justify-center'}`}>
+          <a href="#home" className="flex min-w-0 items-center gap-3 text-white no-underline" title="Imoka administration"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#d2e7db] text-lg font-bold text-[#174e46]">I</span>{sidebarExpanded && <span className="min-w-0"><strong className="block truncate text-sm tracking-wide">IMOKA POS</strong><small className="block text-[9px] tracking-[.14em] text-white/65">ADMIN WORKSPACE</small></span>}</a>
+          {sidebarExpanded && <button className="grid size-8 shrink-0 place-items-center rounded-lg text-white/75 transition-colors hover:bg-white/10 hover:text-white" type="button" onClick={toggleSidebar} aria-label="Collapse menu" title="Collapse menu"><ChevronLeft size={18} /></button>}
+          {!sidebarExpanded && <button className="absolute -right-3 top-5 grid size-7 place-items-center rounded-full border border-white/80 bg-white text-[#174e46] shadow-lg" type="button" onClick={toggleSidebar} aria-label="Expand menu" title="Expand menu"><ChevronRight size={16} /></button>}
         </div>
+        <div className="my-4 h-px bg-white/15" />
+        {sidebarExpanded && <label className="mb-5 flex h-10 items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 text-white/60 focus-within:border-white/35"><Search size={15} /><input className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/45" value={navSearch} onChange={event => setNavSearch(event.target.value)} placeholder="Search menu" aria-label="Search menu" /></label>}
+        <nav className="grid content-start gap-5 overflow-y-auto" aria-label="Admin navigation">
+          {filteredGroups.map(group => <div key={group.title}>{sidebarExpanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-white/55">{group.title}</p>}<div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setActivePage(id)} className={`flex w-full items-center gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors ${sidebarExpanded ? '' : 'justify-center px-0'} ${activePage === id ? 'border-[#78ad91] bg-[#367c69] text-white shadow-[0_8px_24px_rgba(6,30,24,0.24)]' : 'border-transparent bg-[#205c52] text-white/85 hover:bg-[#2d6e61]'}`} aria-current={activePage === id ? 'page' : undefined} title={sidebarExpanded ? undefined : label}><Icon size={18} aria-hidden="true" /><span className={sidebarExpanded ? 'truncate' : 'sr-only'}>{label}</span></button>)}</div></div>)}
+        </nav>
+        <div className="mt-auto border-t border-white/15 pt-3"><div className={`mb-2 flex items-center gap-2.5 rounded-xl bg-white/10 p-2 ${sidebarExpanded ? '' : 'justify-center'}`}><span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#d2e7db] text-xs font-bold text-[#174e46]">{user.firstName?.[0]}{user.lastName?.[0]}</span>{sidebarExpanded && <span className="min-w-0 flex-1"><strong className="block truncate text-xs">{user.firstName} {user.lastName}</strong><small className="text-[10px] text-white/60">Administrator</small></span>}</div><button type="button" onClick={onSignOut} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white ${sidebarExpanded ? '' : 'justify-center px-0'}`} title="Sign out"><LogOut size={17} /><span className={sidebarExpanded ? '' : 'sr-only'}>Sign out</span></button></div>
       </aside>
 
-      <main className="ml-[250px] min-h-screen max-[700px]:ml-[72px]">
+      {sidebarExpanded && <button className="fixed inset-0 z-10 hidden bg-gray-950/25 max-[700px]:block" type="button" aria-label="Close navigation menu" onClick={toggleSidebar} />}
+      <main className={`min-h-screen transition-[margin] duration-300 ${sidebarExpanded ? 'ml-[292px] max-[700px]:ml-[106px]' : 'ml-[106px]'}`}>
         <header className="sticky top-0 z-10 flex min-h-[72px] items-center justify-between border-b border-gray-200 bg-white px-8 max-[700px]:px-4">
           <div><p className="m-0 text-[10px] font-bold uppercase tracking-[.15em] text-[#367c69]">Imoka Technology</p><h1 className="mt-1 text-xl font-semibold">{navItems.find(item => item.id === activePage)?.label}</h1></div>
           <div className="flex items-center gap-2 text-sm text-gray-600"><span className="grid size-8 place-items-center rounded-full bg-[#d2e7db] text-xs font-bold text-[#174e46]">{user.firstName?.[0]}{user.lastName?.[0]}</span><span className="max-[500px]:hidden">Administrator</span></div>
@@ -292,8 +322,9 @@ export default function AdminDashboard({ token, user, onSignOut }) {
         </section>
       </main>
 
-      {showUserForm && <div className="fixed inset-0 z-50 grid place-items-center bg-gray-950/45 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowUserForm(false); }}>
-        <section className="w-full max-w-[480px] border border-gray-200 bg-white p-6 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
+      <AnimatePresence>
+      {showUserForm && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 grid place-items-center bg-gray-950/45 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowUserForm(false); }}>
+        <motion.section initial={{ opacity: 0, y: 15, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 360, damping: 28 }} className="w-full max-w-[480px] border border-gray-200 bg-white p-6 shadow-[0_25px_80px_rgba(9,32,26,0.25)]" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
           <div className="mb-5 flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#367c69]">Team access</p><h2 id="create-user-title" className="mt-1 text-2xl font-semibold">Add a cashier</h2></div><button type="button" className="grid size-9 place-items-center text-gray-500 hover:bg-gray-100 hover:text-gray-900" aria-label="Close" onClick={() => setShowUserForm(false)}><X size={19} /></button></div>
           {createdUser ? <div className="border border-[#c8dfd0] bg-[#f1f7f3] p-4"><p className="font-semibold text-[#174e46]">Cashier account created</p><p className="mt-2 text-sm text-gray-700">{createdUser.user.firstName} {createdUser.user.lastName} can sign in with:</p><p className="mt-3 text-sm"><strong>Email:</strong> {createdUser.user.email}</p><p className="mt-1 text-sm"><strong>Temporary password:</strong> <code className="select-all bg-white px-1.5 py-1">{createdUser.initialPassword}</code></p><p className="mt-3 text-xs leading-5 text-gray-600">Share this password securely. The cashier will be required to change it at first sign-in.</p><button className="mt-5 h-10 w-full bg-[#174e46] px-4 text-sm font-semibold text-white hover:bg-[#23665a]" type="button" onClick={() => setShowUserForm(false)}>Done</button></div> : <form className="grid gap-4" onSubmit={createUser} noValidate>
             <label className="grid gap-1.5 text-sm font-medium">First name<input className="h-11 border border-gray-300 px-3 outline-none focus:border-[#367c69]" name="firstName" type="text" maxLength={80} autoComplete="given-name" required /></label>
@@ -303,11 +334,11 @@ export default function AdminDashboard({ token, user, onSignOut }) {
             {formError && <p className="text-sm text-rose-700" role="alert">{formError}</p>}
             <div className="mt-1 flex justify-end gap-2"><button className="h-10 border border-gray-300 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50" type="button" onClick={() => setShowUserForm(false)}>Cancel</button><button className="inline-flex h-10 items-center gap-2 bg-[#174e46] px-4 text-sm font-semibold text-white hover:bg-[#23665a] disabled:opacity-60" type="submit" disabled={saving}>{saving ? 'Creating...' : 'Create cashier'}</button></div>
           </form>}
-        </section>
-      </div>}
+        </motion.section>
+      </motion.div>}
 
-      {showProductForm && <div className="fixed inset-0 z-50 grid place-items-center bg-gray-950/45 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowProductForm(false); }}>
-        <section className="w-full max-w-[480px] border border-gray-200 bg-white p-6 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
+      {showProductForm && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 grid place-items-center bg-gray-950/45 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowProductForm(false); }}>
+        <motion.section initial={{ opacity: 0, y: 15, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 360, damping: 28 }} className="w-full max-w-[480px] border border-gray-200 bg-white p-6 shadow-[0_25px_80px_rgba(9,32,26,0.25)]" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
           <div className="mb-5 flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#367c69]">Shared catalog</p><h2 id="product-form-title" className="mt-1 text-2xl font-semibold">{editingProduct ? 'Edit product' : 'Add product'}</h2></div><button type="button" className="grid size-9 place-items-center text-gray-500 hover:bg-gray-100 hover:text-gray-900" aria-label="Close" onClick={() => setShowProductForm(false)}><X size={19} /></button></div>
           <form className="grid gap-4" onSubmit={saveProduct} noValidate>
             <label className="grid gap-1.5 text-sm font-medium">Product name<input className="h-11 border border-gray-300 px-3 outline-none focus:border-[#367c69]" name="name" type="text" maxLength={160} defaultValue={editingProduct?.name || ''} required /></label>
@@ -318,8 +349,9 @@ export default function AdminDashboard({ token, user, onSignOut }) {
             {formError && <p className="text-sm text-rose-700" role="alert">{formError}</p>}
             <div className="mt-1 flex justify-end gap-2"><button className="h-10 border border-gray-300 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50" type="button" onClick={() => setShowProductForm(false)}>Cancel</button><button className="h-10 bg-[#174e46] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#23665a] disabled:opacity-60" type="submit" disabled={productSaving}>{productSaving ? 'Saving...' : editingProduct ? 'Save changes' : 'Create product'}</button></div>
           </form>
-        </section>
-      </div>}
+        </motion.section>
+      </motion.div>}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,11 +1,33 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { BarChart3, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleDollarSign, Home, LogOut, Search, Settings2 } from 'lucide-react';
 import { initializeLegacyApp } from '../imkoka.js';
 import { apiUrl } from './api.js';
+import { FeedbackProvider } from './components/ui/FeedbackProvider.jsx';
 import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, panelClass, smallButtonClass, tableClass } from './uiClasses.js';
 
 const navButtonClass = 'flex w-full items-center gap-3 rounded-lg border border-teal-800 bg-teal-800 px-3.5 py-3 text-left text-sm text-white transition-colors hover:border-teal-700 hover:bg-teal-700 [&.active]:border-teal-500 [&.active]:bg-teal-600 [&.active]:ring-1 [&.active]:ring-teal-300';
+const cashierNavigation = [
+  { title: 'Workspace', items: [{ id: 'dashboard', label: 'Dashboard', icon: Home }, { id: 'shift', label: 'Shift', icon: BriefcaseBusiness }, { id: 'sales', label: 'Sales / POS', icon: CircleDollarSign }] },
+  { title: 'Operations', items: [{ id: 'expenses', label: 'Expenses', icon: Settings2 }, { id: 'reports', label: 'Reports', icon: BarChart3 }] }
+];
 
 export default function App() {
+  return <FeedbackProvider><CashierApp /></FeedbackProvider>;
+}
+
+function CashierApp() {
+  const [expanded, setExpanded] = useState(() => localStorage.getItem('imoka_cashier_sidebar_collapsed') !== 'true');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 700px)');
+    const syncSidebar = event => setExpanded(!event.matches && localStorage.getItem('imoka_cashier_sidebar_collapsed') !== 'true');
+    syncSidebar(media);
+    media.addEventListener('change', syncSidebar);
+    return () => media.removeEventListener('change', syncSidebar);
+  }, []);
+
   useEffect(() => {
     return initializeLegacyApp();
   }, []);
@@ -22,27 +44,46 @@ export default function App() {
     }
   }
 
+  const navigation = cashierNavigation.map(group => ({
+    ...group,
+    items: group.items.filter(item => item.label.toLowerCase().includes(search.toLowerCase()))
+  })).filter(group => group.items.length);
+
+  function toggleSidebar() {
+    setExpanded(value => {
+      localStorage.setItem('imoka_cashier_sidebar_collapsed', String(!value));
+      return !value;
+    });
+  }
+
   return (
     <>
     <div className="app flex min-h-screen bg-gray-50 text-gray-900 print:hidden">
-      <aside className="sidebar fixed inset-y-0 left-0 z-[5] w-[250px] bg-gray-900 px-[14px] py-[22px] text-white max-[700px]:w-[72px] max-[700px]:px-2">
-        <div className="brand flex items-center gap-3 border-b border-white/10 px-2.5 pb-6">
-          <div className="logo grid size-[42px] shrink-0 place-items-center rounded-[11px] bg-blue-600 text-lg font-extrabold">IC</div>
-          <div className="max-[700px]:hidden">
-            <h1>Imoka Co Ltd</h1>
-            <small className="text-gray-300">Business POS</small>
-          </div>
+      {expanded && <button className="fixed inset-0 z-[9] hidden bg-gray-950/25 max-[700px]:block" type="button" aria-label="Close navigation menu" onClick={toggleSidebar} />}
+      <motion.aside animate={{ width: expanded ? 268 : 82 }} transition={{ type: 'spring', stiffness: 320, damping: 32 }} className="fixed inset-y-3 left-3 z-10 flex flex-col overflow-visible rounded-2xl border border-white/80 bg-[#174e46] px-3 py-4 text-white shadow-[0_22px_70px_rgba(12,49,40,0.3)]">
+        <div className={`flex h-12 items-center ${expanded ? 'justify-between px-1' : 'justify-center'}`}>
+          <a href="#home" className="flex min-w-0 items-center gap-3 text-white no-underline" title="Imoka POS">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#d2e7db] text-lg font-extrabold text-[#174e46]">I</span>
+            {expanded && <span className="min-w-0"><strong className="block truncate text-sm tracking-wide">IMOKA POS</strong><small className="block text-[9px] tracking-[.14em] text-white/65">CASHIER WORKSPACE</small></span>}
+          </a>
+          {expanded && <button className="grid size-8 shrink-0 place-items-center rounded-lg text-white/75 transition-colors hover:bg-white/10 hover:text-white" type="button" onClick={toggleSidebar} aria-label="Collapse menu" title="Collapse menu"><ChevronLeft size={18} /></button>}
+          {!expanded && <button className="absolute -right-3 top-5 grid size-7 place-items-center rounded-full border border-white/80 bg-white text-[#174e46] shadow-lg" type="button" onClick={toggleSidebar} aria-label="Expand menu" title="Expand menu"><ChevronRight size={16} /></button>}
         </div>
-        <div className="nav mt-[18px] grid gap-1">
-          <button className={`${navButtonClass} active`} data-page="dashboard">▦ <span className="max-[700px]:hidden">Dashboard</span></button>
-          <button className={navButtonClass} data-page="shift">◷ <span className="max-[700px]:hidden">Shift</span></button>
-          <button className={navButtonClass} data-page="sales">▣ <span className="max-[700px]:hidden">Sales / POS</span></button>
-          <button className={navButtonClass} data-page="expenses">▤ <span className="max-[700px]:hidden">Expenses</span></button>
-          <button className={navButtonClass} data-page="reports">◒ <span className="max-[700px]:hidden">Reports</span></button>
+        <div className="my-4 h-px bg-white/15" />
+        {expanded && <label className="mb-5 flex h-10 items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 text-white/60 focus-within:border-white/35"><Search size={15} /><input className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/45" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search menu" aria-label="Search menu" /></label>}
+        <nav className="grid content-start gap-5 overflow-y-auto" aria-label="Cashier navigation">
+          {navigation.map(group => <div key={group.title}>
+            {expanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-white/55">{group.title}</p>}
+            <div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" data-page={id} title={expanded ? undefined : label} className={`${navButtonClass} ${expanded ? '' : 'justify-center px-0'} [&.active]:shadow-[0_8px_24px_rgba(6,30,24,0.24)]`}><Icon size={18} /><span className={expanded ? 'truncate' : 'sr-only'}>{label}</span></button>)}</div>
+          </div>)}
+        </nav>
+        <div className="mt-auto border-t border-white/15 pt-3">
+          <div className={`mb-2 flex items-center gap-2.5 rounded-xl bg-white/10 p-2 ${expanded ? '' : 'justify-center'}`}><span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#d2e7db] text-xs font-bold text-[#174e46]">IC</span>{expanded && <span className="min-w-0 flex-1"><strong className="block truncate text-xs">Cashier account</strong><small className="text-[10px] text-white/60">Active session</small></span>}</div>
+          <button type="button" onClick={signOut} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white ${expanded ? '' : 'justify-center px-0'}`} title="Sign out"><LogOut size={17} /><span className={expanded ? '' : 'sr-only'}>Sign out</span></button>
         </div>
       </aside>
 
-      <main className="main ml-[250px] min-w-0 w-[calc(100%-250px)] flex-1 max-[700px]:ml-[72px] max-[700px]:w-[calc(100%-72px)]">
+      <main className={`main min-w-0 flex-1 transition-[margin] duration-300 ${expanded ? 'ml-[292px] w-[calc(100%-292px)] max-[700px]:ml-[106px] max-[700px]:w-[calc(100%-106px)]' : 'ml-[106px] w-[calc(100%-106px)]'}`}>
         <header className="topbar sticky top-0 z-[4] flex h-[70px] items-center justify-between border-b border-gray-200 bg-white px-7 max-[700px]:gap-2 max-[700px]:px-[15px]">
           <strong className="text-lg max-[420px]:text-[15px]" id="pageTitle">Dashboard</strong>
           <div className="flex items-center gap-4">
@@ -151,7 +192,6 @@ export default function App() {
       </main>
 
       <div className="fixed inset-0 z-20 hidden place-items-center bg-slate-900/50 p-5" id="modal"><div className="max-h-[90vh] w-full max-w-[650px] overflow-auto rounded-xl bg-white p-[22px]" id="modalBox"></div></div>
-      <div className="fixed bottom-[22px] right-[22px] z-50 hidden rounded-lg bg-gray-900 px-4 py-3 text-white" id="toast"></div>
     </div>
     <div className="hidden print:absolute print:left-0 print:top-0 print:block print:visible print:w-[80mm]" id="printArea"></div>
     </>

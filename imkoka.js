@@ -1,5 +1,6 @@
 import { buttonClass, deleteButtonClass, editButtonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, smallButtonClass } from './src/uiClasses.js';
 import { apiUrl } from './src/api.js';
+import { confirmAction, showNotice } from './src/components/ui/FeedbackProvider.jsx';
 
 export function initializeLegacyApp() {
 const KEY = 'imoka_pos_v1';
@@ -69,10 +70,7 @@ function dateOnly(iso) {
 }
 
 function toast(msg) {
-    const toastElement = document.getElementById('toast');
-    toastElement.textContent = msg;
-    toastElement.classList.remove('hidden');
-    setTimeout(() => toastElement.classList.add('hidden'), 2200);
+    showNotice(msg, 'success');
 }
 
 function nextId(prefix, list) {
@@ -172,7 +170,7 @@ async function openShift() {
 
 async function closeShift() {
     if (!currentShift) return toast('There is no open shift to close');
-    if (!confirm('Close your shift now? You will need to open a new shift before making more sales.')) return;
+    if (!await confirmAction({ title: 'Close this shift?', message: 'Sales will stop until you open a new shift. Your collected total will be recorded.', confirmLabel: 'Close shift', destructive: true })) return;
     const token = sessionStorage.getItem('imoka_pos_token');
     const button = document.getElementById('closeShiftButton');
     button.disabled = true;
@@ -497,8 +495,8 @@ function editProduct(id) {
     openProductModal(db.products.find(product => product.id === id));
 }
 
-function deleteProduct(id) {
-    if (confirm('Delete this product?')) {
+async function deleteProduct(id) {
+    if (await confirmAction({ title: 'Delete this product?', message: 'This product will be removed from your local inventory.', confirmLabel: 'Delete product', destructive: true })) {
         db.products = db.products.filter(product => product.id !== id);
         saveDB();
         renderInventory();
@@ -544,8 +542,8 @@ function editCustomer(id) {
     openCustomerModal(db.customers.find(customer => customer.id === id));
 }
 
-function deleteCustomer(id) {
-    if (confirm('Delete this customer?')) {
+async function deleteCustomer(id) {
+    if (await confirmAction({ title: 'Delete this customer?', message: 'This customer will be removed from the local customer list.', confirmLabel: 'Delete customer', destructive: true })) {
         db.customers = db.customers.filter(customer => customer.id !== id);
         saveDB();
         renderCustomers();
@@ -583,8 +581,8 @@ function saveExpense() {
     toast('Expense saved');
 }
 
-function deleteExpense(id) {
-    if (confirm('Delete this expense?')) {
+async function deleteExpense(id) {
+    if (await confirmAction({ title: 'Delete this expense?', message: 'This expense will be removed from local reports.', confirmLabel: 'Delete expense', destructive: true })) {
         db.expenses = db.expenses.filter(expense => expense.id !== id);
         saveDB();
         renderExpenses();
@@ -685,8 +683,8 @@ function exportSales() {
     })));
 }
 
-function resetDemo() {
-    if (confirm('This will erase all locally stored sales, products, customers and expenses and restore demo data. Continue?')) {
+async function resetDemo() {
+    if (await confirmAction({ title: 'Reset local demo data?', message: 'This erases locally stored sales, products, customers, and expenses, then restores demo values.', confirmLabel: 'Reset demo data', destructive: true })) {
         db = structuredClone(defaultData);
         cart = [];
         saveDB();

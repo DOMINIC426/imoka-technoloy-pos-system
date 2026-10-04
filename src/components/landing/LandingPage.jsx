@@ -5,6 +5,7 @@ import Navbar from './sections/Navbar.jsx';
 import Portfolio from './sections/Portfolio.jsx';
 import Products from './sections/Products.jsx';
 import Services from './sections/Services.jsx';
+import ScrollReveal from './ScrollReveal.jsx';
 
 export default function LandingPage() {
   return (
@@ -12,10 +13,10 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
-        <Services />
-        <Products />
-        <Portfolio />
-        <Contact />
+        <ScrollReveal><Services /></ScrollReveal>
+        <ScrollReveal delay={0.04}><Products /></ScrollReveal>
+        <ScrollReveal delay={0.04}><Portfolio /></ScrollReveal>
+        <ScrollReveal delay={0.04}><Contact /></ScrollReveal>
       </main>
       <Footer />
     </div>
