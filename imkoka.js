@@ -1,3 +1,5 @@
+import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, smallButtonClass } from './src/uiClasses.js';
+
 export function initializeLegacyApp() {
 const KEY = 'imoka_pos_v1';
 const defaultData = {
@@ -67,8 +69,8 @@ function dateOnly(iso) {
 function toast(msg) {
     const toastElement = document.getElementById('toast');
     toastElement.textContent = msg;
-    toastElement.classList.add('show');
-    setTimeout(() => toastElement.classList.remove('show'), 2200);
+    toastElement.classList.remove('hidden');
+    setTimeout(() => toastElement.classList.add('hidden'), 2200);
 }
 
 function nextId(prefix, list) {
@@ -133,8 +135,8 @@ function renderDashboard() {
 
     const rows = db.sales.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
     document.getElementById('recentTable').innerHTML = rows.length
-        ? `<thead><tr><th>Receipt</th><th>Date</th><th>Customer</th><th>Payment</th><th class="right">Total</th></tr></thead><tbody>${rows.map(sale => `<tr><td>${esc(sale.receiptNo)}</td><td>${new Date(sale.date).toLocaleString()}</td><td>${esc(sale.customerName)}</td><td>${esc(sale.payment)}</td><td class="right">${money(sale.total)}</td></tr>`).join('')}</tbody>`
-        : '<tbody><tr><td class="empty">No sales yet.</td></tr></tbody>';
+        ? `<thead><tr><th>Receipt</th><th>Date</th><th>Customer</th><th>Payment</th><th class="text-right">Total</th></tr></thead><tbody>${rows.map(sale => `<tr><td>${esc(sale.receiptNo)}</td><td>${new Date(sale.date).toLocaleString()}</td><td>${esc(sale.customerName)}</td><td>${esc(sale.payment)}</td><td class="text-right">${money(sale.total)}</td></tr>`).join('')}</tbody>`
+        : `<tbody><tr><td class="${emptyClass}">No sales yet.</td></tr></tbody>`;
 }
 
 function renderPOS() {
@@ -148,7 +150,7 @@ function renderProducts() {
     const query = (document.getElementById('productSearch')?.value || '').toLowerCase();
     const products = db.products.filter(product => (product.name + ' ' + product.category).toLowerCase().includes(query));
 
-    document.getElementById('productGrid').innerHTML = products.map(product => `<div class="product"><h3>${esc(product.name)}</h3><div class="price">${money(product.price)}</div><div class="stock ${product.stock === 0 ? 'out' : product.stock <= 5 ? 'low' : ''}">${product.stock === 0 ? 'Out of stock' : product.stock + ' in stock'}</div><button class="btn sm primary" ${product.stock === 0 ? 'disabled' : ''} onclick="addToCart('${product.id}')">Add to cart</button></div>`).join('') || '<div class="empty">No matching products.</div>';
+    document.getElementById('productGrid').innerHTML = products.map(product => `<div class="rounded-[11px] border border-gray-200 bg-white p-3.5"><h3 class="mb-[7px] mt-0 text-sm font-semibold">${esc(product.name)}</h3><div class="font-bold">${money(product.price)}</div><div class="mb-3 mt-1.5 text-[11px] ${product.stock === 0 ? 'text-red-600' : product.stock <= 5 ? 'text-amber-700' : 'text-gray-500'}">${product.stock === 0 ? 'Out of stock' : product.stock + ' in stock'}</div><button class="${smallButtonClass}" ${product.stock === 0 ? 'disabled' : ''} onclick="addToCart('${product.id}')">Add to cart</button></div>`).join('') || `<div class="${emptyClass}">No matching products.</div>`;
 }
 
 function addToCart(id) {
@@ -182,9 +184,9 @@ function renderCart() {
     box.innerHTML = cart.length
         ? cart.map(row => {
             const product = db.products.find(item => item.id === row.id);
-            return `<div class="cart-row"><div>${esc(product.name)}<br><small>${money(product.price)}</small></div><input class="qty" type="number" min="1" max="${product.stock}" value="${row.qty}" onchange="setQty('${row.id}',this.value)"><strong class="right">${money(product.price * row.qty)}</strong><button class="btn sm" onclick="removeCart('${row.id}')">×</button></div>`;
+            return `<div class="grid grid-cols-[minmax(0,1fr)_72px_90px_30px] items-center gap-2 border-b border-gray-200 py-2.5 text-[13px] max-[700px]:grid-cols-[minmax(0,1fr)_54px_minmax(64px,auto)_30px] max-[700px]:gap-1 max-[700px]:text-[11px]"><div>${esc(product.name)}<br><small class="text-gray-500">${money(product.price)}</small></div><input class="${inputClass} w-[72px] max-[700px]:w-[54px]" type="number" min="1" max="${product.stock}" value="${row.qty}" onchange="setQty('${row.id}',this.value)"><strong class="text-right">${money(product.price * row.qty)}</strong><button class="${smallButtonClass}" onclick="removeCart('${row.id}')">×</button></div>`;
         }).join('')
-        : '<div class="empty">Cart is empty.</div>';
+        : `<div class="${emptyClass}">Cart is empty.</div>`;
 
     document.getElementById('cartCount').textContent = `${cart.reduce((count, row) => count + row.qty, 0)} items`;
     document.getElementById('subtotal').textContent = money(subtotal);
@@ -256,56 +258,56 @@ function completeSale() {
 
 function printReceipt(s) {
     const set = db.settings;
-    document.getElementById('printArea').innerHTML = `<article class="receipt">
-        <header class="receipt-header">
-            <h1>${esc(set.name)}</h1>
-            <div class="receipt-title">SALES RECEIPT</div>
-            <div class="receipt-contact">${set.phone ? `${esc(set.phone)}<br>` : ''}${set.email ? esc(set.email) : ''}</div>
-            ${set.address ? `<div class="receipt-business-detail">${esc(set.address)}</div>` : ''}
-            ${set.tin || set.vrn ? `<div class="receipt-business-detail">${set.tin ? `TIN: ${esc(set.tin)}` : ''}${set.tin && set.vrn ? ' &nbsp; ' : ''}${set.vrn ? `VRN: ${esc(set.vrn)}` : ''}</div>` : ''}
+    document.getElementById('printArea').innerHTML = `<article class="mx-auto w-[72mm] break-words bg-white text-base leading-[1.45] text-black [font-family:Arial,sans-serif]">
+        <header class="text-center">
+            <h1 class="m-0 text-[22px] font-bold">${esc(set.name)}</h1>
+            <div class="mt-1 text-[15px] font-bold">SALES RECEIPT</div>
+            <div class="mt-[3px] text-[13px]">${set.phone ? `${esc(set.phone)}<br>` : ''}${esc(set.email)}</div>
+            ${set.address ? `<div class="mt-[3px] text-[13px]">${esc(set.address)}</div>` : ''}
+            ${set.tin || set.vrn ? `<div class="mt-[3px] text-[13px]">${set.tin ? `TIN: ${esc(set.tin)}` : ''}${set.tin && set.vrn ? ' &nbsp; ' : ''}${set.vrn ? `VRN: ${esc(set.vrn)}` : ''}</div>` : ''}
         </header>
 
-        <div class="receipt-divider"></div>
+        <div class="my-[9px] border-t border-dashed border-black"></div>
 
-        <section class="receipt-meta">
-            <div class="receipt-meta-row"><span>Receipt No.</span><strong>${esc(s.receiptNo)}</strong></div>
-            <div class="receipt-meta-row"><span>Date</span><strong>${new Date(s.date).toLocaleString()}</strong></div>
-            <div class="receipt-meta-row"><span>Customer</span><strong>${esc(s.customerName)}</strong></div>
-            <div class="receipt-meta-row"><span>Payment</span><strong>${esc(s.payment)}</strong></div>
+        <section class="grid gap-[5px] text-sm">
+            <div class="flex justify-between gap-2"><span>Receipt No.</span><strong class="max-w-[65%] break-words text-right">${esc(s.receiptNo)}</strong></div>
+            <div class="flex justify-between gap-2"><span>Date</span><strong class="max-w-[65%] break-words text-right">${new Date(s.date).toLocaleString()}</strong></div>
+            <div class="flex justify-between gap-2"><span>Customer</span><strong class="max-w-[65%] break-words text-right">${esc(s.customerName)}</strong></div>
+            <div class="flex justify-between gap-2"><span>Payment</span><strong class="max-w-[65%] break-words text-right">${esc(s.payment)}</strong></div>
         </section>
 
-        <div class="receipt-divider"></div>
+        <div class="my-[9px] border-t border-dashed border-black"></div>
 
-        <table class="receipt-items">
+        <table class="w-full table-fixed border-collapse text-sm [&_td]:break-words [&_td]:p-[5px_2px] [&_td]:align-top [&_th]:border-b [&_th]:border-black [&_th]:p-[5px_2px] [&_th]:text-left [&_th]:text-xs">
             <thead>
-                <tr><th>Description</th><th>Qty</th><th>Amount</th></tr>
+                <tr><th class="w-[54%]">Description</th><th class="w-[12%] text-center">Qty</th><th class="w-[34%] text-right">Amount</th></tr>
             </thead>
             <tbody>
                 ${s.items.map(item => `<tr>
-                    <td>${esc(item.name)}<small>${money(item.price)} each</small></td>
-                    <td>${item.qty}</td>
-                    <td>${money(item.qty * item.price)}</td>
+                    <td>${esc(item.name)}<small class="mt-0.5 block text-xs">${money(item.price)} each</small></td>
+                    <td class="text-center">${item.qty}</td>
+                    <td class="text-right">${money(item.qty * item.price)}</td>
                 </tr>`).join('')}
             </tbody>
         </table>
 
-        <div class="receipt-divider"></div>
+        <div class="my-[9px] border-t border-dashed border-black"></div>
 
-        <table class="receipt-totals">
+        <table class="w-full border-collapse text-sm [&_td]:p-[5px_2px] [&_td:last-child]:text-right">
             <tbody>
                 <tr><td>Subtotal</td><td>${money(s.subtotal)}</td></tr>
                 <tr><td>Discount</td><td>${money(s.discount)}</td></tr>
                 <tr><td>Tax</td><td>${money(s.tax)}</td></tr>
-                <tr class="grand"><td>TOTAL</td><td>${money(s.total)}</td></tr>
+                <tr><td class="border-t border-black pt-2 text-[17px] font-bold">TOTAL</td><td class="border-t border-black pt-2 text-[17px] font-bold">${money(s.total)}</td></tr>
                 <tr><td>Amount paid</td><td>${money(s.paid)}</td></tr>
                 <tr><td>Change</td><td>${money(s.change)}</td></tr>
             </tbody>
         </table>
 
-        <footer class="receipt-footer">
-            <strong>THANK YOU FOR YOUR BUSINESS</strong>
+        <footer class="mt-[10px] grid gap-[5px] border-t border-dashed border-black pt-2 text-center text-[13px]">
+            <strong class="text-sm">THANK YOU FOR YOUR BUSINESS</strong>
             <div>${esc(set.footer)}</div>
-            <small>Please keep this receipt for your records.</small>
+            <small class="text-xs">Please keep this receipt for your records.</small>
         </footer>
     </article>`;
     window.print();
@@ -315,15 +317,16 @@ function renderInventory() {
     const query = (document.getElementById('inventorySearch')?.value || '').toLowerCase();
     const products = db.products.filter(product => (product.name + ' ' + product.category).toLowerCase().includes(query));
 
-    document.getElementById('inventoryTable').innerHTML = `<thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody>${products.map(product => `<tr><td>${product.id}</td><td>${esc(product.name)}</td><td>${esc(product.category)}</td><td>${money(product.price)}</td><td class="${product.stock === 0 ? 'out' : product.stock <= 5 ? 'low' : ''}">${product.stock}</td><td><button class="btn sm" onclick="editProduct('${product.id}')">Edit</button> <button class="btn sm" onclick="deleteProduct('${product.id}')">Delete</button></td></tr>`).join('')}</tbody>`;
+    document.getElementById('inventoryTable').innerHTML = `<thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody>${products.map(product => `<tr><td>${product.id}</td><td>${esc(product.name)}</td><td>${esc(product.category)}</td><td>${money(product.price)}</td><td class="${product.stock === 0 ? 'text-red-600' : product.stock <= 5 ? 'text-amber-700' : ''}">${product.stock}</td><td><button class="${smallButtonClass}" onclick="editProduct('${product.id}')">Edit</button> <button class="${smallButtonClass}" onclick="deleteProduct('${product.id}')">Delete</button></td></tr>`).join('')}</tbody>`;
 }
 
 function openProductModal(product = null) {
-    document.getElementById('modalBox').innerHTML = `<h2>${product ? 'Edit' : 'Add'} product</h2><div class="form-grid">
- <div class="field"><label>Product name</label><input id="fName" value="${esc(product?.name || '')}"></div><div class="field"><label>Category</label><input id="fCategory" value="${esc(product?.category || '')}"></div>
- <div class="field"><label>Selling price</label><input id="fPrice" type="number" min="0" value="${product?.price || 0}"></div><div class="field"><label>Stock quantity</label><input id="fStock" type="number" min="0" value="${product?.stock || 0}"></div></div>
- <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveProduct('${product?.id || ''}')">Save product</button></div>`;
-    document.getElementById('modal').classList.add('show');
+     document.getElementById('modalBox').innerHTML = `<h2 class="mb-4 text-base font-semibold">${product ? 'Edit' : 'Add'} product</h2><div class="${formGridClass}">
+ <div class="${fieldClass}"><label class="${labelClass}">Product name</label><input class="${inputClass}" id="fName" value="${esc(product?.name || '')}"></div><div class="${fieldClass}"><label class="${labelClass}">Category</label><input class="${inputClass}" id="fCategory" value="${esc(product?.category || '')}"></div>
+ <div class="${fieldClass}"><label class="${labelClass}">Selling price</label><input class="${inputClass}" id="fPrice" type="number" min="0" value="${product?.price || 0}"></div><div class="${fieldClass}"><label class="${labelClass}">Stock quantity</label><input class="${inputClass}" id="fStock" type="number" min="0" value="${product?.stock || 0}"></div></div>
+ <div class="${modalActionsClass}"><button class="${buttonClass}" onclick="closeModal()">Cancel</button><button class="${buttonClass}" onclick="saveProduct('${product?.id || ''}')">Save product</button></div>`;
+     document.getElementById('modal').classList.remove('hidden');
+     document.getElementById('modal').classList.add('grid');
 }
 
 function saveProduct(id) {
@@ -363,14 +366,15 @@ function renderCustomers() {
     const query = (document.getElementById('customerSearch')?.value || '').toLowerCase();
     const customers = db.customers.filter(customer => (customer.name + ' ' + customer.phone + ' ' + customer.email).toLowerCase().includes(query));
 
-    document.getElementById('customersTable').innerHTML = `<thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead><tbody>${customers.map(customer => `<tr><td>${customer.id}</td><td>${esc(customer.name)}</td><td>${esc(customer.phone)}</td><td>${esc(customer.email)}</td><td><button class="btn sm" onclick="editCustomer('${customer.id}')">Edit</button> ${customer.id !== 'C001' ? `<button class="btn sm" onclick="deleteCustomer('${customer.id}')">Delete</button>` : ''}</td></tr>`).join('')}</tbody>`;
+    document.getElementById('customersTable').innerHTML = `<thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Actions</th></tr></thead><tbody>${customers.map(customer => `<tr><td>${customer.id}</td><td>${esc(customer.name)}</td><td>${esc(customer.phone)}</td><td>${esc(customer.email)}</td><td><button class="${smallButtonClass}" onclick="editCustomer('${customer.id}')">Edit</button> ${customer.id !== 'C001' ? `<button class="${smallButtonClass}" onclick="deleteCustomer('${customer.id}')">Delete</button>` : ''}</td></tr>`).join('')}</tbody>`;
 }
 
 function openCustomerModal(customer = null) {
-    document.getElementById('modalBox').innerHTML = `<h2>${customer ? 'Edit' : 'Add'} customer</h2><div class="form-grid">
- <div class="field full"><label>Name</label><input id="cName" value="${esc(customer?.name || '')}"></div><div class="field"><label>Phone</label><input id="cPhone" value="${esc(customer?.phone || '')}"></div><div class="field"><label>Email</label><input id="cEmail" value="${esc(customer?.email || '')}"></div></div>
- <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveCustomer('${customer?.id || ''}')">Save customer</button></div>`;
-    document.getElementById('modal').classList.add('show');
+     document.getElementById('modalBox').innerHTML = `<h2 class="mb-4 text-base font-semibold">${customer ? 'Edit' : 'Add'} customer</h2><div class="${formGridClass}">
+ <div class="${fieldClass} col-span-2 max-[700px]:col-span-1"><label class="${labelClass}">Name</label><input class="${inputClass}" id="cName" value="${esc(customer?.name || '')}"></div><div class="${fieldClass}"><label class="${labelClass}">Phone</label><input class="${inputClass}" id="cPhone" value="${esc(customer?.phone || '')}"></div><div class="${fieldClass}"><label class="${labelClass}">Email</label><input class="${inputClass}" id="cEmail" value="${esc(customer?.email || '')}"></div></div>
+ <div class="${modalActionsClass}"><button class="${buttonClass}" onclick="closeModal()">Cancel</button><button class="${buttonClass}" onclick="saveCustomer('${customer?.id || ''}')">Save customer</button></div>`;
+     document.getElementById('modal').classList.remove('hidden');
+     document.getElementById('modal').classList.add('grid');
 }
 
 function saveCustomer(id) {
@@ -405,12 +409,13 @@ function deleteCustomer(id) {
 }
 
 function renderExpenses() {
-    document.getElementById('expensesTable').innerHTML = `<thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${db.expenses.slice().reverse().map(expense => `<tr><td>${dateOnly(expense.date)}</td><td>${esc(expense.description)}</td><td>${esc(expense.category)}</td><td>${money(expense.amount)}</td><td><button class="btn sm" onclick="deleteExpense('${expense.id}')">Delete</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">No expenses recorded.</td></tr>'}</tbody>`;
+    document.getElementById('expensesTable').innerHTML = `<thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${db.expenses.slice().reverse().map(expense => `<tr><td>${dateOnly(expense.date)}</td><td>${esc(expense.description)}</td><td>${esc(expense.category)}</td><td>${money(expense.amount)}</td><td><button class="${smallButtonClass}" onclick="deleteExpense('${expense.id}')">Delete</button></td></tr>`).join('') || `<tr><td colspan="5" class="${emptyClass}">No expenses recorded.</td></tr>`}</tbody>`;
 }
 
 function openExpenseModal() {
-    document.getElementById('modalBox').innerHTML = `<h2>Add expense</h2><div class="form-grid"><div class="field full"><label>Description</label><input id="eDesc"></div><div class="field"><label>Category</label><input id="eCat" placeholder="e.g. Supplies"></div><div class="field"><label>Amount</label><input id="eAmt" type="number" min="0"></div></div><div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveExpense()">Save expense</button></div>`;
-    document.getElementById('modal').classList.add('show');
+    document.getElementById('modalBox').innerHTML = `<h2 class="mb-4 text-base font-semibold">Add expense</h2><div class="${formGridClass}"><div class="${fieldClass} col-span-2 max-[700px]:col-span-1"><label class="${labelClass}">Description</label><input class="${inputClass}" id="eDesc"></div><div class="${fieldClass}"><label class="${labelClass}">Category</label><input class="${inputClass}" id="eCat" placeholder="e.g. Supplies"></div><div class="${fieldClass}"><label class="${labelClass}">Amount</label><input class="${inputClass}" id="eAmt" type="number" min="0"></div></div><div class="${modalActionsClass}"><button class="${buttonClass}" onclick="closeModal()">Cancel</button><button class="${buttonClass}" onclick="saveExpense()">Save expense</button></div>`;
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modal').classList.add('grid');
 }
 
 function saveExpense() {
@@ -451,7 +456,7 @@ function renderReports() {
     document.getElementById('rSales').textContent = money(sales.reduce((total, sale) => total + sale.total, 0));
     document.getElementById('rTransactions').textContent = sales.length;
     document.getElementById('rExpenses').textContent = money(expenses.reduce((total, expense) => total + expense.amount, 0));
-    document.getElementById('reportTable').innerHTML = `<thead><tr><th>Receipt</th><th>Date</th><th>Customer</th><th>Payment</th><th class="right">Total</th><th>Action</th></tr></thead><tbody>${sales.slice().reverse().map(sale => `<tr><td>${sale.receiptNo}</td><td>${new Date(sale.date).toLocaleString()}</td><td>${esc(sale.customerName)}</td><td>${esc(sale.payment)}</td><td class="right">${money(sale.total)}</td><td><button class="btn sm" onclick="printReceiptById('${sale.id}')">Print</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">No sales for this period.</td></tr>'}</tbody>`;
+    document.getElementById('reportTable').innerHTML = `<thead><tr><th>Receipt</th><th>Date</th><th>Customer</th><th>Payment</th><th class="text-right">Total</th><th>Action</th></tr></thead><tbody>${sales.slice().reverse().map(sale => `<tr><td>${sale.receiptNo}</td><td>${new Date(sale.date).toLocaleString()}</td><td>${esc(sale.customerName)}</td><td>${esc(sale.payment)}</td><td class="text-right">${money(sale.total)}</td><td><button class="${smallButtonClass}" onclick="printReceiptById('${sale.id}')">Print</button></td></tr>`).join('') || `<tr><td colspan="6" class="${emptyClass}">No sales for this period.</td></tr>`}</tbody>`;
 }
 
 function printReceiptById(id) {
@@ -488,7 +493,8 @@ function saveSettings() {
 }
 
 function closeModal() {
-    document.getElementById('modal').classList.remove('show');
+    document.getElementById('modal').classList.add('hidden');
+    document.getElementById('modal').classList.remove('grid');
 }
 
 document.getElementById('modal').addEventListener('click', event => {

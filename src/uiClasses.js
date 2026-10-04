@@ -1,0 +1,11 @@
+const buttonBaseClass = 'inline-flex items-center justify-center gap-2 rounded-lg border border-black bg-black font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50';
+export const buttonClass = `${buttonBaseClass} px-3.5 py-2.5 text-sm`;
+export const smallButtonClass = `${buttonBaseClass} px-2.5 py-1.5 text-xs`;
+export const inputClass = 'w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100';
+export const panelClass = 'mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_28px_rgba(16,24,40,0.07)]';
+export const tableClass = 'w-full border-collapse text-left text-[13px] [&_th]:whitespace-nowrap [&_th]:border-b [&_th]:border-gray-200 [&_th]:bg-gray-50 [&_th]:p-3 [&_th]:font-semibold [&_th]:text-gray-500 [&_td]:whitespace-nowrap [&_td]:border-b [&_td]:border-gray-200 [&_td]:p-3';
+export const emptyClass = 'px-8 py-8 text-center text-gray-500';
+export const fieldClass = 'flex flex-col gap-1.5';
+export const labelClass = 'text-xs font-semibold text-gray-500';
+export const formGridClass = 'grid grid-cols-2 gap-3 max-[700px]:grid-cols-1';
+export const modalActionsClass = 'mt-5 flex justify-end gap-2';
