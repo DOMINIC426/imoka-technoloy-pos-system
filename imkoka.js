@@ -115,7 +115,7 @@ function updateClock() {
     });
 }
 
-setInterval(updateClock, 1000);
+const clockTimer = setInterval(updateClock, 1000);
 updateClock();
 
 function renderDashboard() {
@@ -555,4 +555,6 @@ Object.assign(window, {
     renderPOS, renderProducts, renderReports, resetDemo, saveCustomer, saveExpense,
     saveProduct, saveSale, saveSettings, setQty, showPage
 });
+
+return () => clearInterval(clockTimer);
 }

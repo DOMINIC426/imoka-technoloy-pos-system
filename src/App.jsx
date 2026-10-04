@@ -3,7 +3,7 @@ import { initializeLegacyApp } from '../imkoka.js';
 
 export default function App() {
   useEffect(() => {
-    initializeLegacyApp();
+    return initializeLegacyApp();
   }, []);
 
   return (
@@ -30,7 +30,10 @@ export default function App() {
       <main className="main min-w-0 flex-1">
         <header className="topbar sticky top-0 z-[4] flex items-center justify-between">
           <strong id="pageTitle">Dashboard</strong>
-          <div id="clock"></div>
+          <div className="flex items-center gap-4">
+            <a className="btn sm" href="#home">Website</a>
+            <div id="clock"></div>
+          </div>
         </header>
         <div className="content mx-auto w-full">
           <section id="dashboard" className="page">
