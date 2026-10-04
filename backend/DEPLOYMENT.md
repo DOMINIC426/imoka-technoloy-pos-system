@@ -16,9 +16,9 @@ Do not commit real URLs or passwords. The database URL previously shared in conv
 
 ## Deploying this backend to Vercel
 
-Set the Vercel project root directory to `backend`. Vercel uses `vercel.json` and `src/server.js` as a Node serverless function. The entrypoint exports an ES-module default handler; it is not an Express app, so do not add `module.exports = app`.
+Set the Vercel project root directory to `backend`. Vercel discovers `api/index.js`, which re-exports the ES-module handler from `src/server.js`. The entrypoint is not an Express app, so do not add `module.exports = app`.
 
-Vercel build runs `npm run build`, which generates the Prisma client. It intentionally does not apply migrations during preview or production builds. Apply the checked-in migration once, before directing production traffic, using a trusted environment with `DIRECT_URL` configured and `npm run prisma:migrate:deploy`. Do not run `prisma migrate dev` against production.
+Vercel build runs `npm run build`, and `postinstall` also runs `prisma generate`; the Prisma schema includes `rhel-openssl-3.0.x` for Vercel's Linux runtime. These generate the Prisma client but intentionally do not apply migrations during preview or production builds. Apply the checked-in migration once, before directing production traffic, using a trusted environment with `DIRECT_URL` configured and `npm run prisma:migrate:deploy`. Do not run `prisma migrate dev` against production.
 
 Use Neon's pooled URL for `DATABASE_URL` at runtime. Vercel functions are short-lived/serverless; the old `start:hosted` Docker command is for a persistent Node/Docker host and is not Vercel's function start command.
 
