@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock3, Download, FileClock, Home, LayoutDashboard, LogOut, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import { apiUrl } from '../../api.js';
-import { confirmAction, FeedbackProvider } from '../ui/FeedbackProvider.jsx';
+import { confirmAction } from '../ui/FeedbackProvider.jsx';
 
 const money = value => `TZS ${Number(value || 0).toLocaleString('en-TZ', { maximumFractionDigits: 2 })}`;
 const dateTime = value => value ? new Date(value).toLocaleString() : 'In progress';
@@ -37,10 +37,6 @@ const navGroups = [
 ];
 
 export default function AdminDashboard({ token, user, onSignOut }) {
-  return <FeedbackProvider><AdminDashboardContent token={token} user={user} onSignOut={onSignOut} /></FeedbackProvider>;
-}
-
-function AdminDashboardContent({ token, user, onSignOut }) {
   const [activePage, setActivePage] = useState('dashboard');
   const [sidebarExpanded, setSidebarExpanded] = useState(() => localStorage.getItem('imoka_admin_sidebar_collapsed') !== 'true');
   const [navSearch, setNavSearch] = useState('');

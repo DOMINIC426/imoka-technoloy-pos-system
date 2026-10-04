@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { BarChart3, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleDollarSign, Home, LogOut, Search, Settings2 } from 'lucide-react';
 import { initializeLegacyApp } from '../imkoka.js';
 import { apiUrl } from './api.js';
-import { FeedbackProvider } from './components/ui/FeedbackProvider.jsx';
 import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, panelClass, smallButtonClass, tableClass } from './uiClasses.js';
 
 const navButtonClass = 'flex w-full items-center gap-3 rounded-lg border border-teal-800 bg-teal-800 px-3.5 py-3 text-left text-sm text-white transition-colors hover:border-teal-700 hover:bg-teal-700 [&.active]:border-teal-500 [&.active]:bg-teal-600 [&.active]:ring-1 [&.active]:ring-teal-300';
@@ -13,7 +12,7 @@ const cashierNavigation = [
 ];
 
 export default function App() {
-  return <FeedbackProvider><CashierApp /></FeedbackProvider>;
+  return <CashierApp />;
 }
 
 function CashierApp() {

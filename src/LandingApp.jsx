@@ -5,6 +5,7 @@ import ChangePasswordPage from './components/landing/ChangePasswordPage.jsx';
 import LoginPage from './components/landing/LoginPage.jsx';
 import LandingPage from './components/landing/LandingPage.jsx';
 import { apiUrl } from './api.js';
+import { FeedbackProvider } from './components/ui/FeedbackProvider.jsx';
 
 export default function LandingApp() {
   const [route, setRoute] = useState('home');
@@ -12,6 +13,11 @@ export default function LandingApp() {
     try { return JSON.parse(sessionStorage.getItem('imoka_pos_user') || 'null'); }
     catch { return null; }
   });
+
+  return <FeedbackProvider><RoutedApp route={route} setRoute={setRoute} user={user} setUser={setUser} /></FeedbackProvider>;
+}
+
+function RoutedApp({ route, setRoute, user, setUser }) {
 
   useEffect(() => {
     let active = true;
