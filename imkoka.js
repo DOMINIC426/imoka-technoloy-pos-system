@@ -1,3 +1,4 @@
+export function initializeLegacyApp() {
 const KEY = 'imoka_pos_v1';
 const defaultData = {
     settings: {
@@ -545,3 +546,13 @@ function resetDemo() {
 document.getElementById('reportFrom').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
 document.getElementById('reportTo').value = dateOnly(nowISO());
 renderDashboard();
+
+Object.assign(window, {
+    addToCart, clearCart, closeModal, completeSale, deleteCustomer, deleteExpense,
+    deleteProduct, editCustomer, editProduct, exportCustomers, exportProducts,
+    exportSales, openCustomerModal, openExpenseModal, openProductModal,
+    printReceiptById, removeCart, renderCart, renderCustomers, renderInventory,
+    renderPOS, renderProducts, renderReports, resetDemo, saveCustomer, saveExpense,
+    saveProduct, saveSale, saveSettings, setQty, showPage
+});
+}
