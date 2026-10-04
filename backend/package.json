@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "start:hosted": "prisma migrate deploy && node src/server.js",
+    "build": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev"

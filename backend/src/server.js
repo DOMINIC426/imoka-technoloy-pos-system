@@ -122,21 +122,20 @@ async function ensureInitialData() {
   if (!seededAdmin.password) {
     console.warn('ADMIN_INITIAL_PASSWORD is not configured; seeded admin login is disabled.');
   } else {
-    const existingAdmin = await prisma.user.findUnique({ where: { email: seededAdmin.email } });
-    if (!existingAdmin) {
-      const credentials = hashPassword(seededAdmin.password);
-      await prisma.user.create({
-        data: {
-          firstName: seededAdmin.firstName,
-          lastName: seededAdmin.lastName,
-          email: seededAdmin.email,
-          role: 'admin',
-          passwordSalt: credentials.salt,
-          passwordHash: credentials.hash,
-          mustChangePassword: false
-        }
-      });
-    }
+    const credentials = hashPassword(seededAdmin.password);
+    await prisma.user.upsert({
+      where: { email: seededAdmin.email },
+      update: {},
+      create: {
+        firstName: seededAdmin.firstName,
+        lastName: seededAdmin.lastName,
+        email: seededAdmin.email,
+        role: 'admin',
+        passwordSalt: credentials.salt,
+        passwordHash: credentials.hash,
+        mustChangePassword: false
+      }
+    });
   }
 
 }
@@ -568,7 +567,11 @@ async function ensureSeedData() {
   await ensureInitialData();
 }
 
-const server = createServer(async (request, response) => {
+let initialDataPromise;
+
+export default async function handler(request, response) {
+  initialDataPromise ||= ensureSeedData();
+  await initialDataPromise;
   if (!setCors(request, response)) return send(response, 403, { error: 'Origin is not allowed.' });
   if (request.method === 'OPTIONS') {
     response.writeHead(204);
@@ -582,19 +585,22 @@ const server = createServer(async (request, response) => {
     send(response, status, { error: status === 500 ? 'An internal server error occurred.' : error.message });
     if (status === 500) console.error(error);
   }
-});
-
-ensureSeedData().then(() => {
-  server.listen(port, '0.0.0.0', () => console.log(`Imoka POS API listening on port ${port}`));
-}).catch(error => {
-  console.error('Failed to initialize API.', error);
-  process.exitCode = 1;
-});
-
-async function shutdown() {
-  server.close();
-  await prisma.$disconnect();
 }
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+if (!process.env.VERCEL) {
+  const server = createServer(handler);
+  ensureSeedData().then(() => {
+    server.listen(port, '0.0.0.0', () => console.log(`Imoka POS API listening on port ${port}`));
+  }).catch(error => {
+    console.error('Failed to initialize API.', error);
+    process.exitCode = 1;
+  });
+
+  async function shutdown() {
+    server.close();
+    await prisma.$disconnect();
+  }
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+}

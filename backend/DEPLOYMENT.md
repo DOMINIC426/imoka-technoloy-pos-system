@@ -14,11 +14,15 @@ Configure these backend secrets in the hosting provider:
 
 Do not commit real URLs or passwords. The database URL previously shared in conversation should be rotated in Neon before deployment. Put replacement credentials only in the hosting provider's secret settings.
 
-## Build and start
+## Deploying this backend to Vercel
 
-Build the backend from the `backend` directory. The Dockerfile installs dependencies and generates the Prisma client. The hosted start script runs `prisma migrate deploy` before starting the HTTP server. On a platform without this Dockerfile, use `npm install`, `npm run prisma:generate`, and `npm run start:hosted` as the build/start commands. Never use `prisma migrate dev` in production.
+Set the Vercel project root directory to `backend`. Vercel uses `vercel.json` and `src/server.js` as a Node serverless function. The entrypoint exports an ES-module default handler; it is not an Express app, so do not add `module.exports = app`.
 
-The repository includes `npm run prisma:migrate:dev` for local development. Set `DATABASE_URL` and `DIRECT_URL` in the local backend environment before running Prisma commands.
+Vercel build runs `npm run build`, which generates the Prisma client. It intentionally does not apply migrations during preview or production builds. Apply the checked-in migration once, before directing production traffic, using a trusted environment with `DIRECT_URL` configured and `npm run prisma:migrate:deploy`. Do not run `prisma migrate dev` against production.
+
+Use Neon's pooled URL for `DATABASE_URL` at runtime. Vercel functions are short-lived/serverless; the old `start:hosted` Docker command is for a persistent Node/Docker host and is not Vercel's function start command.
+
+The repository includes `npm run prisma:migrate:dev` for local development. Set `DATABASE_URL` and `DIRECT_URL` in the backend environment before running Prisma commands.
 
 ## Vercel frontend
 
