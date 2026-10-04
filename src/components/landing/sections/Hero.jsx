@@ -11,7 +11,7 @@ export default function Hero() {
           <h2 className="mt-[17px] max-w-[470px] text-[26px] font-semibold uppercase leading-[1.05] text-white [font-family:'Barlow_Condensed',sans-serif] max-[680px]:max-w-[390px] max-[680px]:text-[23px]">Creative solutions for your business</h2>
           <p className="mt-[15px] max-w-[425px] text-[10px] uppercase leading-[1.7] tracking-[.05em] text-gray-300 max-[680px]:max-w-[390px] max-[680px]:text-[9px]">Branding / Printing / Stationery / Graphic design / Internet services</p>
           <div className="mt-[29px] flex items-center gap-7 max-[380px]:items-start max-[380px]:flex-col max-[380px]:gap-4">
-            <a className="inline-flex min-h-12 items-center justify-center gap-[22px] bg-black px-[18px] text-xs font-extrabold uppercase text-white no-underline transition-transform hover:-translate-y-0.5" href="#contact">Get started <ArrowUpRight size={18} /></a>
+            <a className="inline-flex min-h-12 items-center justify-center gap-[22px] bg-black px-[18px] text-xs font-extrabold uppercase text-white no-underline transition-transform hover:-translate-y-0.5" href="#login">Get started <ArrowUpRight size={18} /></a>
             <a className="inline-flex items-center gap-2 text-xs font-semibold text-gray-100 no-underline" href="#services">Explore services <ArrowDownRight size={16} /></a>
           </div>
           <div className="mt-[47px] flex items-center gap-3 text-[9px] uppercase tracking-[.1em] text-gray-400 max-[680px]:mt-[31px] max-[680px]:text-[8px]"><span className="h-px w-[35px] bg-blue-500"></span><span>Branding / Printing / Design / Internet</span></div>

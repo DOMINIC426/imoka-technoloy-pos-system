@@ -12,7 +12,7 @@ export default function Contact() {
         <div className="grid min-w-[280px] gap-[22px] max-[680px]:min-w-0 max-[680px]:gap-[19px]">
           <a className="flex items-center gap-[15px] text-[13px] text-white no-underline" href="tel:+255744805938"><Phone className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">Call us</small>+255 744 805 938</span></a>
           <a className="flex items-center gap-[15px] text-[13px] text-white no-underline" href="mailto:imokaprints@gmail.com"><Mail className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">Email</small>imokaprints@gmail.com</span></a>
-          <div className="flex items-center gap-[15px] text-[13px] text-white"><MapPin className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">Find us</small>Dar es Salaam, Tanzania</span></div>
+          <div className="flex items-center gap-[15px] text-[13px] text-white"><MapPin className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">Find us</small>Kiwira Tandale</span></div>
         </div>
       </div>
     </section>

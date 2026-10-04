@@ -2,10 +2,24 @@ import { useEffect } from 'react';
 import { initializeLegacyApp } from '../imkoka.js';
 import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, panelClass, smallButtonClass, tableClass } from './uiClasses.js';
 
+const navButtonClass = 'flex w-full items-center gap-3 rounded-lg border border-teal-800 bg-teal-800 px-3.5 py-3 text-left text-sm text-white transition-colors hover:border-teal-700 hover:bg-teal-700 [&.active]:border-teal-500 [&.active]:bg-teal-600 [&.active]:ring-1 [&.active]:ring-teal-300';
+
 export default function App() {
   useEffect(() => {
     return initializeLegacyApp();
   }, []);
+
+  async function signOut() {
+    const token = sessionStorage.getItem('imoka_pos_token');
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    } finally {
+      sessionStorage.removeItem('imoka_pos_token');
+      sessionStorage.removeItem('imoka_pos_user');
+      sessionStorage.removeItem('imoka_shift_open');
+      window.location.hash = '#login';
+    }
+  }
 
   return (
     <>
@@ -19,13 +33,11 @@ export default function App() {
           </div>
         </div>
         <div className="nav mt-[18px] grid gap-1">
-          <button className="active flex w-full items-center gap-3 rounded-lg border border-black bg-black px-3.5 py-3 text-left text-sm text-white [&.active]:ring-1 [&.active]:ring-blue-500" data-page="dashboard">▦ <span className="max-[700px]:hidden">Dashboard</span></button>
-          <button className="flex w-full items-center gap-3 rounded-lg border border-black bg-black px-3.5 py-3 text-left text-sm text-white [&.active]:ring-1 [&.active]:ring-blue-500" data-page="sales">▣ <span className="max-[700px]:hidden">Sales / POS</span></button>
-          <button className="flex w-full items-center gap-3 rounded-lg border border-black bg-black px-3.5 py-3 text-left text-sm text-white [&.active]:ring-1 [&.active]:ring-blue-500" data-page="products">◫ <span className="max-[700px]:hidden">Products</span></button>
-          <button className="flex w-full items-center gap-3 rounded-lg border border-black bg-black px-3.5 py-3 text-left text-sm text-white [&.active]:ring-1 [&.active]:ring-blue-500" data-page="customers">♙ <span className="max-[700px]:hidden">Customers</span></button>
-          <button className="flex w-full items-center gap-3 rounded-lg border border-black bg-black px-3.5 py-3 text-left text-sm text-white [&.active]:ring-1 [&.active]:ring-blue-500" data-page="expenses">▤ <span className="max-[700px]:hidden">Expenses</span></button>
-          <button className="flex w-full items-center gap-3 rounded-lg border border-black bg-black px-3.5 py-3 text-left text-sm text-white [&.active]:ring-1 [&.active]:ring-blue-500" data-page="reports">◒ <span className="max-[700px]:hidden">Reports</span></button>
-          <button className="flex w-full items-center gap-3 rounded-lg border border-black bg-black px-3.5 py-3 text-left text-sm text-white [&.active]:ring-1 [&.active]:ring-blue-500" data-page="settings">⚙ <span className="max-[700px]:hidden">Settings</span></button>
+          <button className={`${navButtonClass} active`} data-page="dashboard">▦ <span className="max-[700px]:hidden">Dashboard</span></button>
+          <button className={navButtonClass} data-page="shift">◷ <span className="max-[700px]:hidden">Shift</span></button>
+          <button className={navButtonClass} data-page="sales">▣ <span className="max-[700px]:hidden">Sales / POS</span></button>
+          <button className={navButtonClass} data-page="expenses">▤ <span className="max-[700px]:hidden">Expenses</span></button>
+          <button className={navButtonClass} data-page="reports">◒ <span className="max-[700px]:hidden">Reports</span></button>
         </div>
       </aside>
 
@@ -33,7 +45,10 @@ export default function App() {
         <header className="topbar sticky top-0 z-[4] flex h-[70px] items-center justify-between border-b border-gray-200 bg-white px-7 max-[700px]:gap-2 max-[700px]:px-[15px]">
           <strong className="text-lg max-[420px]:text-[15px]" id="pageTitle">Dashboard</strong>
           <div className="flex items-center gap-4">
-            <a className={`${smallButtonClass} no-underline`} href="#home">Website</a>
+            <div className="flex items-center gap-2">
+              <a className={`${smallButtonClass} no-underline`} href="#home">Website</a>
+              <button className={smallButtonClass} onClick={signOut}>Sign out</button>
+            </div>
             <div className="whitespace-nowrap text-sm max-[700px]:text-[11px]" id="clock"></div>
           </div>
         </header>
@@ -48,6 +63,20 @@ export default function App() {
             <div className={`${panelClass} mt-5`}>
               <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Recent sales</h2><button className={smallButtonClass} onClick={() => window.showPage('sales')}>Open POS</button></div>
               <div className="overflow-x-auto"><table className={tableClass} id="recentTable"></table></div>
+            </div>
+          </section>
+
+          <section id="shift" className="page hidden">
+            <div className={`${panelClass} mt-0 max-w-[680px]`}>
+              <p className="mb-1 text-xs font-bold uppercase tracking-[.14em] text-teal-700">Cashier session</p>
+              <h2 className="mb-2 text-xl font-semibold">Current shift</h2>
+              <p className="mb-5 text-sm text-gray-500" id="shiftStatus">Checking shift status...</p>
+              <div className="mb-5 grid grid-cols-2 gap-4 border-y border-gray-200 py-4 max-[500px]:grid-cols-1">
+                <div><span className="block text-xs text-gray-500">Opened at</span><strong className="mt-1 block text-sm" id="shiftOpenedAt">Not open</strong></div>
+                <div><span className="block text-xs text-gray-500">Collected this shift</span><strong className="mt-1 block text-sm" id="shiftCollected">TZS 0</strong></div>
+              </div>
+              <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50" id="openShiftButton" onClick={() => window.openShift()}>Open shift</button>
+              <button className="ml-2 inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" id="closeShiftButton" onClick={() => window.closeShift()}>Close shift</button>
             </div>
           </section>
 
@@ -71,24 +100,12 @@ export default function App() {
                 <div className="mt-4 grid gap-2">
                   <select className={inputClass} id="paymentMethod"><option>Cash</option><option>Mobile Money</option><option>Card</option><option>Bank Transfer</option></select>
                   <input className={inputClass} id="amountPaid" type="number" min="0" placeholder="Amount paid" />
-                  <button className={buttonClass} onClick={() => window.completeSale()}>Complete sale &amp; print receipt</button>
-                  <button className={buttonClass} onClick={() => window.saveSale(false)}>Save sale without printing</button>
+                  <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => window.completeSale()}>Complete sale &amp; print receipt</button>
+                  <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-700 bg-teal-700 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => window.saveSale(false)}>Save sale without printing</button>
                 </div>
               </div></div>
             </div>
           </section>
-
-          <section id="products" className="page hidden"><div className={`${panelClass} mt-0`}>
-            <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Product catalogue &amp; inventory</h2><button className={buttonClass} onClick={() => window.openProductModal()}>+ Add product</button></div>
-            <div className="mb-3 flex flex-wrap gap-2.5 max-[700px]:w-full"><input className={`${inputClass} min-w-[180px] flex-1`} id="inventorySearch" placeholder="Search products..." onInput={() => window.renderInventory()} /><button className={buttonClass} onClick={() => window.exportProducts()}>Export CSV</button></div>
-            <div className="overflow-x-auto"><table className={tableClass} id="inventoryTable"></table></div>
-          </div></section>
-
-          <section id="customers" className="page hidden"><div className={`${panelClass} mt-0`}>
-            <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Customers</h2><button className={buttonClass} onClick={() => window.openCustomerModal()}>+ Add customer</button></div>
-            <div className="mb-3 flex flex-wrap gap-2.5 max-[700px]:w-full"><input className={`${inputClass} min-w-[180px] flex-1`} id="customerSearch" placeholder="Search customers..." onInput={() => window.renderCustomers()} /><button className={buttonClass} onClick={() => window.exportCustomers()}>Export CSV</button></div>
-            <div className="overflow-x-auto"><table className={tableClass} id="customersTable"></table></div>
-          </div></section>
 
           <section id="expenses" className="page hidden"><div className={`${panelClass} mt-0`}>
             <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Business expenses</h2><button className={buttonClass} onClick={() => window.openExpenseModal()}>+ Add expense</button></div>

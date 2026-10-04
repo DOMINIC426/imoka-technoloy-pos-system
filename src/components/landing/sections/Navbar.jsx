@@ -26,7 +26,6 @@ export default function Navbar() {
           {links.map(([label, href], index) => (
             <a key={label} className={`relative py-2 text-[13px] text-gray-200 no-underline after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-blue-600 after:transition-transform hover:text-white hover:after:scale-x-100 max-[680px]:py-[13px] max-[680px]:after:hidden${index === 0 ? ' text-white after:scale-x-100' : ''}`} href={href} onClick={() => setMenuOpen(false)}>{label}</a>
           ))}
-          <a className="inline-flex items-center justify-between gap-4 bg-black px-[15px] py-[11px] text-xs font-bold text-white no-underline transition-transform hover:-translate-y-0.5 max-[680px]:mt-2" href="#pos">Open POS <span aria-hidden="true">↗</span></a>
         </div>
       </nav>
     </header>

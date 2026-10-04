@@ -1,19 +1,78 @@
 import { useEffect, useState } from 'react';
 import PosApp from './App.jsx';
+import AdminDashboard from './components/admin/AdminDashboard.jsx';
+import LoginPage from './components/landing/LoginPage.jsx';
 import LandingPage from './components/landing/LandingPage.jsx';
 
 export default function LandingApp() {
-  const [showPos, setShowPos] = useState(() => window.location.hash === '#pos');
+  const [route, setRoute] = useState('home');
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('imoka_pos_user') || 'null'); }
+    catch { return null; }
+  });
 
   useEffect(() => {
-    const syncRoute = () => setShowPos(window.location.hash === '#pos');
+    let active = true;
+    const syncRoute = async () => {
+      const target = window.location.hash.slice(1) || 'home';
+      if (target !== 'pos' && target !== 'admin') {
+        if (active) setRoute(target === 'login' ? 'login' : 'home');
+        return;
+      }
+
+      const token = sessionStorage.getItem('imoka_pos_token');
+      if (!token) {
+        if (active) setRoute('login');
+        if (window.location.hash !== '#login') window.location.hash = '#login';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/session', { headers: { Authorization: `Bearer ${token}` } });
+        if (!response.ok) throw new Error('Session expired.');
+        const result = await response.json();
+        const authorizedRoute = result.user.role === 'admin' ? 'admin' : 'pos';
+        if (active) {
+          setUser(result.user);
+          setRoute(authorizedRoute);
+        }
+        if (target !== authorizedRoute) window.location.hash = `#${authorizedRoute}`;
+      } catch {
+        sessionStorage.removeItem('imoka_pos_token');
+        sessionStorage.removeItem('imoka_pos_user');
+        if (active) {
+          setUser(null);
+          setRoute('login');
+        }
+        if (window.location.hash !== '#login') window.location.hash = '#login';
+      }
+    };
+    syncRoute();
     window.addEventListener('hashchange', syncRoute);
-    return () => window.removeEventListener('hashchange', syncRoute);
+    return () => {
+      active = false;
+      window.removeEventListener('hashchange', syncRoute);
+    };
   }, []);
 
   useEffect(() => {
-    if (showPos) window.scrollTo(0, 0);
-  }, [showPos]);
+    window.scrollTo(0, 0);
+  }, [route]);
 
-  return showPos ? <PosApp /> : <LandingPage />;
+  if (route === 'admin' && user?.role === 'admin') {
+    const signOut = async () => {
+      const token = sessionStorage.getItem('imoka_pos_token');
+      try { await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); }
+      finally {
+        sessionStorage.removeItem('imoka_pos_token');
+        sessionStorage.removeItem('imoka_pos_user');
+        setUser(null);
+        window.location.hash = '#login';
+      }
+    };
+    return <AdminDashboard token={sessionStorage.getItem('imoka_pos_token')} user={user} onSignOut={signOut} />;
+  }
+  if (route === 'pos') return <PosApp />;
+  if (route === 'login') return <LoginPage />;
+  return <LandingPage />;
 }

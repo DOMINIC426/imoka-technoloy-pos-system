@@ -1,4 +1,4 @@
-import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, smallButtonClass } from './src/uiClasses.js';
+import { buttonClass, deleteButtonClass, editButtonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, smallButtonClass } from './src/uiClasses.js';
 
 export function initializeLegacyApp() {
 const KEY = 'imoka_pos_v1';
@@ -28,6 +28,7 @@ const defaultData = {
 
 let db = loadData();
 let cart = [];
+let currentShift = null;
 
 function loadData() {
     try {
@@ -82,6 +83,11 @@ function nextId(prefix, list) {
 }
 
 function showPage(id) {
+    if (id === 'sales' && sessionStorage.getItem('imoka_shift_open') !== 'true') {
+        id = 'shift';
+        toast('Open your shift before starting sales');
+    }
+    if (id === 'products' || id === 'customers') id = 'dashboard';
     document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
     document.querySelectorAll('.nav button').forEach(button => {
@@ -89,21 +95,117 @@ function showPage(id) {
     });
     document.getElementById('pageTitle').textContent = {
         dashboard: 'Dashboard',
+        shift: 'Shift',
         sales: 'Sales / POS',
-        products: 'Products',
-        customers: 'Customers',
         expenses: 'Expenses',
         reports: 'Reports',
-        settings: 'Settings'
     }[id];
 
     if (id === 'dashboard') renderDashboard();
+    if (id === 'shift') renderShift();
     if (id === 'sales') renderPOS();
-    if (id === 'products') renderInventory();
-    if (id === 'customers') renderCustomers();
     if (id === 'expenses') renderExpenses();
     if (id === 'reports') renderReports();
-    if (id === 'settings') renderSettings();
+}
+
+async function renderShift() {
+    const token = sessionStorage.getItem('imoka_pos_token');
+    const status = document.getElementById('shiftStatus');
+    const openedAt = document.getElementById('shiftOpenedAt');
+    const collected = document.getElementById('shiftCollected');
+    const openButton = document.getElementById('openShiftButton');
+    const closeButton = document.getElementById('closeShiftButton');
+    if (!token || !status) return;
+
+    status.textContent = 'Checking shift status...';
+    try {
+        const response = await fetch('/api/shifts/current', { headers: { Authorization: `Bearer ${token}` } });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to check shift status.');
+        currentShift = result.shift;
+        sessionStorage.setItem('imoka_shift_open', currentShift ? 'true' : 'false');
+        if (currentShift) {
+            status.textContent = 'Your shift is open. Sales are enabled.';
+            openedAt.textContent = new Date(currentShift.openedAt).toLocaleString();
+            collected.textContent = money(currentShift.collected);
+            openButton.textContent = 'Shift is open';
+            openButton.disabled = true;
+            closeButton.disabled = false;
+        } else {
+            status.textContent = 'Open a shift before recording any sales.';
+            openedAt.textContent = 'Not open';
+            collected.textContent = money(0);
+            openButton.textContent = 'Open shift';
+            openButton.disabled = false;
+            closeButton.disabled = true;
+        }
+    } catch (error) {
+        currentShift = null;
+        sessionStorage.setItem('imoka_shift_open', 'false');
+        status.textContent = error.message;
+        openButton.disabled = true;
+        closeButton.disabled = true;
+    }
+}
+
+async function openShift() {
+    const token = sessionStorage.getItem('imoka_pos_token');
+    const button = document.getElementById('openShiftButton');
+    button.disabled = true;
+    try {
+        const response = await fetch('/api/shifts/open', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to open shift.');
+        currentShift = result.shift;
+        sessionStorage.setItem('imoka_shift_open', 'true');
+        toast('Shift opened. Sales are now available.');
+        await renderShift();
+    } catch (error) {
+        button.disabled = false;
+        toast(error.message);
+    }
+}
+
+async function closeShift() {
+    if (!currentShift) return toast('There is no open shift to close');
+    if (!confirm('Close your shift now? You will need to open a new shift before making more sales.')) return;
+    const token = sessionStorage.getItem('imoka_pos_token');
+    const button = document.getElementById('closeShiftButton');
+    button.disabled = true;
+    try {
+        const response = await fetch('/api/shifts/close', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to close shift.');
+        currentShift = null;
+        sessionStorage.setItem('imoka_shift_open', 'false');
+        toast('Shift closed successfully');
+        await renderShift();
+    } catch (error) {
+        toast(error.message);
+        button.disabled = false;
+    }
+}
+
+async function loadProducts() {
+    const token = sessionStorage.getItem('imoka_pos_token');
+    if (!token) return;
+    try {
+        const response = await fetch('/api/products', { headers: { Authorization: `Bearer ${token}` } });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to load products.');
+        db.products = result.products;
+        saveDB();
+        renderProducts();
+        renderDashboard();
+    } catch (error) {
+        toast(error.message);
+    }
 }
 
 document.querySelectorAll('.nav button').forEach(button => {
@@ -130,7 +232,7 @@ function renderDashboard() {
     document.getElementById('mTodayCount').textContent = `${todaySales.length} transaction${todaySales.length === 1 ? '' : 's'}`;
     document.getElementById('mMonth').textContent = money(monthSales.reduce((total, sale) => total + sale.total, 0));
     document.getElementById('mProducts').textContent = db.products.length;
-    document.getElementById('mLow').textContent = `${db.products.filter(product => product.stock <= 5).length} low-stock`;
+    document.getElementById('mLow').textContent = `${db.products.filter(product => product.stockTracked !== false && product.stock <= 5).length} low-stock`;
     document.getElementById('mCustomers').textContent = db.customers.length;
 
     const rows = db.sales.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
@@ -144,22 +246,29 @@ function renderPOS() {
     select.innerHTML = db.customers.map(customer => `<option value="${customer.id}">${esc(customer.name)}</option>`).join('');
     renderProducts();
     renderCart();
+    loadProducts();
 }
 
 function renderProducts() {
     const query = (document.getElementById('productSearch')?.value || '').toLowerCase();
     const products = db.products.filter(product => (product.name + ' ' + product.category).toLowerCase().includes(query));
 
-    document.getElementById('productGrid').innerHTML = products.map(product => `<div class="rounded-[11px] border border-gray-200 bg-white p-3.5"><h3 class="mb-[7px] mt-0 text-sm font-semibold">${esc(product.name)}</h3><div class="font-bold">${money(product.price)}</div><div class="mb-3 mt-1.5 text-[11px] ${product.stock === 0 ? 'text-red-600' : product.stock <= 5 ? 'text-amber-700' : 'text-gray-500'}">${product.stock === 0 ? 'Out of stock' : product.stock + ' in stock'}</div><button class="${smallButtonClass}" ${product.stock === 0 ? 'disabled' : ''} onclick="addToCart('${product.id}')">Add to cart</button></div>`).join('') || `<div class="${emptyClass}">No matching products.</div>`;
+    document.getElementById('productGrid').innerHTML = products.map(product => {
+        const stockTracked = product.stockTracked !== false;
+        const outOfStock = stockTracked && product.stock <= 0;
+        const stockLabel = stockTracked ? (outOfStock ? 'Out of stock' : product.stock + ' in stock') : 'Non-stock item';
+        return `<div class="rounded-[11px] border border-gray-200 bg-white p-3.5"><h3 class="mb-[7px] mt-0 text-sm font-semibold">${esc(product.name)}</h3><div class="font-bold">${money(product.price)}</div><div class="mb-3 mt-1.5 text-[11px] ${outOfStock ? 'text-red-600' : stockTracked && product.stock <= 5 ? 'text-amber-700' : 'text-gray-500'}">${stockLabel}</div><button class="${smallButtonClass}" ${outOfStock ? 'disabled' : ''} onclick="addToCart('${product.id}')">Add to cart</button></div>`;
+    }).join('') || `<div class="${emptyClass}">No matching products.</div>`;
 }
 
 function addToCart(id) {
     const product = db.products.find(item => item.id === id);
     if (!product) return;
+    if (product.stockTracked !== false && product.stock <= 0) return toast('This item is out of stock');
 
     const row = cart.find(item => item.id === id);
     if (row) {
-        if (row.qty >= product.stock) return toast('Not enough stock');
+        if (product.stockTracked !== false && row.qty >= product.stock) return toast('Not enough stock');
         row.qty++;
     } else {
         cart.push({ id, qty: 1 });
@@ -184,7 +293,7 @@ function renderCart() {
     box.innerHTML = cart.length
         ? cart.map(row => {
             const product = db.products.find(item => item.id === row.id);
-            return `<div class="grid grid-cols-[minmax(0,1fr)_72px_90px_30px] items-center gap-2 border-b border-gray-200 py-2.5 text-[13px] max-[700px]:grid-cols-[minmax(0,1fr)_54px_minmax(64px,auto)_30px] max-[700px]:gap-1 max-[700px]:text-[11px]"><div>${esc(product.name)}<br><small class="text-gray-500">${money(product.price)}</small></div><input class="${inputClass} w-[72px] max-[700px]:w-[54px]" type="number" min="1" max="${product.stock}" value="${row.qty}" onchange="setQty('${row.id}',this.value)"><strong class="text-right">${money(product.price * row.qty)}</strong><button class="${smallButtonClass}" onclick="removeCart('${row.id}')">×</button></div>`;
+            return `<div class="grid grid-cols-[minmax(0,1fr)_72px_90px_30px] items-center gap-2 border-b border-gray-200 py-2.5 text-[13px] max-[700px]:grid-cols-[minmax(0,1fr)_54px_minmax(64px,auto)_30px] max-[700px]:gap-1 max-[700px]:text-[11px]"><div>${esc(product.name)}<br><small class="text-gray-500">${money(product.price)}</small></div><input class="${inputClass} w-[72px] max-[700px]:w-[54px]" type="number" min="1" ${product.stockTracked === false ? '' : `max="${product.stock}"`} value="${row.qty}" onchange="setQty('${row.id}',this.value)"><strong class="text-right">${money(product.price * row.qty)}</strong><button class="${smallButtonClass}" onclick="removeCart('${row.id}')">×</button></div>`;
         }).join('')
         : `<div class="${emptyClass}">Cart is empty.</div>`;
 
@@ -197,7 +306,7 @@ function renderCart() {
 function setQty(id, value) {
     const product = db.products.find(item => item.id === id);
     const row = cart.find(item => item.id === id);
-    row.qty = Math.max(1, Math.min(product.stock, parseInt(value) || 1));
+    row.qty = Math.max(1, product.stockTracked === false ? parseInt(value) || 1 : Math.min(product.stock, parseInt(value) || 1));
     renderCart();
 }
 
@@ -214,6 +323,10 @@ function calculateTotal() {
 }
 
 function saveSale(printIt) {
+    if (sessionStorage.getItem('imoka_shift_open') !== 'true') {
+        showPage('shift');
+        return toast('Open your shift before recording any sales');
+    }
     if (!cart.length) return toast('Add at least one item.');
 
     const totals = calculateTotal();
@@ -239,10 +352,23 @@ function saveSale(printIt) {
 
     sale.items.forEach(item => {
         const product = db.products.find(entry => entry.id === item.id);
-        product.stock = Math.max(0, product.stock - item.qty);
+        if (product.stockTracked !== false) product.stock = Math.max(0, product.stock - item.qty);
     });
     db.sales.push(sale);
     saveDB();
+    const token = sessionStorage.getItem('imoka_pos_token');
+    if (token) {
+        fetch('/api/sales', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(sale)
+        }).then(response => {
+            if (!response.ok) throw new Error('Sale sync failed');
+        }).catch(() => toast('Sale saved locally, but could not sync to admin reports'));
+    }
     cart = [];
     renderCart();
     renderProducts();
@@ -317,13 +443,21 @@ function renderInventory() {
     const query = (document.getElementById('inventorySearch')?.value || '').toLowerCase();
     const products = db.products.filter(product => (product.name + ' ' + product.category).toLowerCase().includes(query));
 
-    document.getElementById('inventoryTable').innerHTML = `<thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody>${products.map(product => `<tr><td>${product.id}</td><td>${esc(product.name)}</td><td>${esc(product.category)}</td><td>${money(product.price)}</td><td class="${product.stock === 0 ? 'text-red-600' : product.stock <= 5 ? 'text-amber-700' : ''}">${product.stock}</td><td><button class="${smallButtonClass}" onclick="editProduct('${product.id}')">Edit</button> <button class="${smallButtonClass}" onclick="deleteProduct('${product.id}')">Delete</button></td></tr>`).join('')}</tbody>`;
+    document.getElementById('inventoryTable').innerHTML = `<thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody>${products.map(product => {
+        const stockTracked = product.stockTracked !== false;
+        return `<tr><td>${product.id}</td><td>${esc(product.name)}</td><td>${esc(product.category)}</td><td>${money(product.price)}</td><td class="${stockTracked && product.stock === 0 ? 'text-red-600' : stockTracked && product.stock <= 5 ? 'text-amber-700' : ''}">${stockTracked ? product.stock : 'Not tracked'}</td><td><button class="${editButtonClass}" onclick="editProduct('${product.id}')">Edit</button> <button class="${deleteButtonClass}" onclick="deleteProduct('${product.id}')">Delete</button></td></tr>`;
+    }).join('')}</tbody>`;
 }
 
 function openProductModal(product = null) {
+     const categories = ['Printing', 'Branding', 'Stationary', 'Internet', 'Graphics'];
+    const selectedCategory = categories.includes(product?.category) ? product.category : 'Printing';
+    const categoryOptions = categories.map(category => `<option value="${esc(category)}" ${category === selectedCategory ? 'selected' : ''}>${esc(category)}</option>`).join('');
+     const stockTracked = product?.stockTracked !== false;
      document.getElementById('modalBox').innerHTML = `<h2 class="mb-4 text-base font-semibold">${product ? 'Edit' : 'Add'} product</h2><div class="${formGridClass}">
- <div class="${fieldClass}"><label class="${labelClass}">Product name</label><input class="${inputClass}" id="fName" value="${esc(product?.name || '')}"></div><div class="${fieldClass}"><label class="${labelClass}">Category</label><input class="${inputClass}" id="fCategory" value="${esc(product?.category || '')}"></div>
- <div class="${fieldClass}"><label class="${labelClass}">Selling price</label><input class="${inputClass}" id="fPrice" type="number" min="0" value="${product?.price || 0}"></div><div class="${fieldClass}"><label class="${labelClass}">Stock quantity</label><input class="${inputClass}" id="fStock" type="number" min="0" value="${product?.stock || 0}"></div></div>
+ <div class="${fieldClass}"><label class="${labelClass}" for="fName">Product name</label><input class="${inputClass}" id="fName" value="${esc(product?.name || '')}" required></div><div class="${fieldClass}"><label class="${labelClass}" for="fCategory">Category</label><select class="${inputClass}" id="fCategory">${categoryOptions}</select></div>
+ <div class="${fieldClass}"><label class="${labelClass}" for="fPrice">Selling price</label><input class="${inputClass}" id="fPrice" type="number" min="0" value="${product?.price || 0}"></div><div class="${fieldClass}"><label class="${labelClass}" for="fStockType">Stock type</label><select class="${inputClass}" id="fStockType" onchange="document.getElementById('stockQuantityField').classList.toggle('hidden', this.value === 'false')"><option value="true" ${stockTracked ? 'selected' : ''}>Stock item</option><option value="false" ${stockTracked ? '' : 'selected'}>Non-stock item</option></select></div>
+ <div class="${fieldClass} ${stockTracked ? '' : 'hidden'}" id="stockQuantityField"><label class="${labelClass}" for="fStock">Stock quantity</label><input class="${inputClass}" id="fStock" type="number" min="0" value="${stockTracked ? product?.stock || 0 : 0}"></div></div>
  <div class="${modalActionsClass}"><button class="${buttonClass}" onclick="closeModal()">Cancel</button><button class="${buttonClass}" onclick="saveProduct('${product?.id || ''}')">Save product</button></div>`;
      document.getElementById('modal').classList.remove('hidden');
      document.getElementById('modal').classList.add('grid');
@@ -334,10 +468,12 @@ function saveProduct(id) {
     if (!name) return toast('Product name is required');
 
     const product = id ? db.products.find(item => item.id === id) : { id: nextId('P', db.products) };
+    const stockTracked = document.getElementById('fStockType').value === 'true';
     product.name = name;
-    product.category = document.getElementById('fCategory').value.trim() || 'General';
+    product.category = document.getElementById('fCategory').value;
     product.price = Number(document.getElementById('fPrice').value || 0);
-    product.stock = Number(document.getElementById('fStock').value || 0);
+    product.stockTracked = stockTracked;
+    product.stock = stockTracked ? Number(document.getElementById('fStock').value || 0) : 0;
     if (!id) db.products.push(product);
     saveDB();
     closeModal();
@@ -552,6 +688,7 @@ function resetDemo() {
 document.getElementById('reportFrom').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
 document.getElementById('reportTo').value = dateOnly(nowISO());
 renderDashboard();
+renderShift();
 
 Object.assign(window, {
     addToCart, clearCart, closeModal, completeSale, deleteCustomer, deleteExpense,
@@ -559,7 +696,7 @@ Object.assign(window, {
     exportSales, openCustomerModal, openExpenseModal, openProductModal,
     printReceiptById, removeCart, renderCart, renderCustomers, renderInventory,
     renderPOS, renderProducts, renderReports, resetDemo, saveCustomer, saveExpense,
-    saveProduct, saveSale, saveSettings, setQty, showPage
+    openShift, saveProduct, saveSale, saveSettings, setQty, showPage
 });
 
 return () => clearInterval(clockTimer);

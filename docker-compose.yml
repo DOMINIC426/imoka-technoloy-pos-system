@@ -16,6 +16,9 @@ services:
       dockerfile: Dockerfile
     environment:
       PORT: 3000
+      DATA_FILE: /app/data/database.json
+    volumes:
+      - imoka_data:/app/data
     expose:
       - "3000"
     healthcheck:
@@ -24,3 +27,6 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+
+volumes:
+  imoka_data:
