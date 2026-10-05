@@ -25,6 +25,7 @@ model User {
   mustChangePassword Boolean      @default(false)
   createdAt          DateTime     @default(now()) @db.Timestamptz(3)
   sessions           Session[]
+  passwordResetCodes PasswordResetCode[]
   shifts             Shift[]
   sales              Sale[]
   auditEvents        AuditEvent[]
@@ -44,6 +45,21 @@ model Session {
 
   @@index([userId, expiresAt])
   @@index([shiftId])
+}
+
+model PasswordResetCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  codeSalt   String    @db.VarChar(64)
+  codeHash   String    @db.VarChar(128)
+  attempts   Int       @default(0)
+  expiresAt  DateTime  @db.Timestamptz(3)
+  consumedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
 }
 
 model Product {

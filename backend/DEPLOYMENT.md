@@ -2,7 +2,7 @@
 
 ## Database setup
 
-The Prisma schema and first migration are in `prisma/schema.prisma` and `prisma/migrations/20261004120000_init/migration.sql`. The migration creates users, persistent sessions, products, shifts, sales, sale items, and audit events, including their indexes and foreign keys. It seeds the six current demo products.
+The Prisma schema and migrations are in `prisma/schema.prisma` and `prisma/migrations/`. They create users, persistent sessions, password reset codes, products, shifts, sales, sale items, and audit events, including their indexes and foreign keys. The initial migration seeds the six current demo products.
 
 Configure these backend secrets in the hosting provider:
 
@@ -38,6 +38,8 @@ The repository includes `npm run prisma:migrate:dev` for local development. Set 
 Set `VITE_API_BASE_URL` in Vercel to the backend's public origin, for example `https://your-api-host.example.com`, without a trailing slash. Set it for each Vercel environment and rebuild the frontend after changing it. The frontend appends `/api/...` to this value.
 
 Set the same frontend origin in backend `CORS_ORIGINS`, without a trailing slash. For local Docker Compose use `http://localhost:8080`. For Vercel previews, add the exact preview origins you permit; avoid wildcard origins for authenticated APIs.
+
+Password recovery sends a six-digit code through the configured SMTP account. Codes expire after 10 minutes, allow up to five verification attempts, and are stored as salted hashes. Before enabling the recovery link in production, apply all pending Prisma migrations, including `20261005100000_add_password_reset_codes`, and configure the SMTP variables in Vercel.
 
 ## Shift behavior
 

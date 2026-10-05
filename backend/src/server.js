@@ -1,11 +1,16 @@
 import { createServer } from 'node:http';
-import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomInt, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { sendShiftEmail } from './shiftEmail.js';
+import { sendPasswordResetEmail, sendShiftEmail } from './shiftEmail.js';
 
 const prisma = new PrismaClient();
 const port = Number(process.env.PORT || 3000);
 const sessionLifetimeMs = 1000 * 60 * 60 * 24 * 14;
+const passwordResetCodeLifetimeMs = 10 * 60 * 1000;
+const passwordResetRequestLimit = 3;
+const passwordResetAttemptLimit = 5;
+const genericResetRequestMessage = 'If an account with that email exists, a verification code has been sent.';
+const genericResetError = 'The email or verification code is invalid or expired. Request a new code.';
 const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(origin => origin.trim()).filter(Boolean);
 const seededAdmin = {
   email: 'imoka@technology.com',
@@ -182,7 +187,9 @@ async function handle(request, response) {
   if (session?.user.mustChangePassword && ![
     '/api/auth/session',
     '/api/auth/change-password',
-    '/api/auth/logout'
+    '/api/auth/logout',
+    '/api/auth/password-reset/request',
+    '/api/auth/password-reset/complete'
   ].includes(url.pathname)) {
     send(response, 428, { error: 'Change your temporary password before continuing.' });
     return;
@@ -190,6 +197,119 @@ async function handle(request, response) {
 
   if (request.method === 'GET' && url.pathname === '/api/health') {
     send(response, 200, { status: 'ok', service: 'imoka-pos-api', database: 'connected' });
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/auth/password-reset/request') {
+    const body = await readBody(request);
+    const email = String(body.email || '').trim().toLowerCase();
+    if (validEmail(email) && email.length <= 254) {
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (user) {
+        const now = new Date();
+        const recentRequests = await prisma.passwordResetCode.count({
+          where: { userId: user.id, createdAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) } }
+        });
+        if (recentRequests < passwordResetRequestLimit) {
+          await prisma.passwordResetCode.updateMany({
+            where: { userId: user.id, consumedAt: null },
+            data: { consumedAt: now }
+          });
+          const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+          const credentials = hashPassword(code);
+          const resetCode = await prisma.passwordResetCode.create({
+            data: {
+              userId: user.id,
+              codeSalt: credentials.salt,
+              codeHash: credentials.hash,
+              expiresAt: new Date(now.getTime() + passwordResetCodeLifetimeMs)
+            }
+          });
+          try {
+            const sent = await sendPasswordResetEmail({ email: user.email, code });
+            if (!sent) {
+              await prisma.passwordResetCode.delete({ where: { id: resetCode.id } });
+              console.warn('Password reset email was skipped because SMTP credentials are not configured.');
+            }
+          } catch (mailError) {
+            await prisma.passwordResetCode.delete({ where: { id: resetCode.id } });
+            console.error('Password reset email failed:', mailError.message);
+          }
+        }
+      }
+    }
+    send(response, 200, { message: genericResetRequestMessage });
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/auth/password-reset/complete') {
+    const body = await readBody(request);
+    const email = String(body.email || '').trim().toLowerCase();
+    const code = String(body.code || '').trim();
+    const password = body.newPassword;
+    if (typeof password !== 'string' || password.length < 10 || password.length > 128 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+      return send(response, 400, { error: 'Use 10-128 characters with uppercase, lowercase and a number.' });
+    }
+    if (!validEmail(email) || email.length > 254 || !/^\d{6}$/.test(code)) {
+      return send(response, 400, { error: genericResetError });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return send(response, 400, { error: genericResetError });
+    const now = new Date();
+    const resetCode = await prisma.passwordResetCode.findFirst({
+      where: {
+        userId: user.id,
+        consumedAt: null,
+        expiresAt: { gt: now },
+        attempts: { lt: passwordResetAttemptLimit }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (!resetCode) return send(response, 400, { error: genericResetError });
+
+    const suppliedHash = Buffer.from(hashPassword(code, resetCode.codeSalt).hash, 'hex');
+    const expectedHash = Buffer.from(resetCode.codeHash, 'hex');
+    if (suppliedHash.length !== expectedHash.length || !timingSafeEqual(suppliedHash, expectedHash)) {
+      await prisma.passwordResetCode.updateMany({
+        where: { id: resetCode.id, consumedAt: null, attempts: { lt: passwordResetAttemptLimit } },
+        data: { attempts: { increment: 1 } }
+      });
+      return send(response, 400, { error: genericResetError });
+    }
+
+    const credentials = hashPassword(password);
+    const completed = await prisma.$transaction(async transaction => {
+      const consumed = await transaction.passwordResetCode.updateMany({
+        where: {
+          id: resetCode.id,
+          consumedAt: null,
+          expiresAt: { gt: now },
+          attempts: { lt: passwordResetAttemptLimit }
+        },
+        data: { consumedAt: now }
+      });
+      if (consumed.count !== 1) return false;
+
+      await transaction.user.update({
+        where: { id: user.id },
+        data: { passwordSalt: credentials.salt, passwordHash: credentials.hash, mustChangePassword: false }
+      });
+      await transaction.passwordResetCode.updateMany({
+        where: { userId: user.id, id: { not: resetCode.id }, consumedAt: null },
+        data: { consumedAt: now }
+      });
+      await transaction.session.deleteMany({ where: { userId: user.id } });
+      return true;
+    });
+    if (!completed) return send(response, 400, { error: genericResetError });
+
+    try {
+      await addAudit(null, 'auth.password_reset', 'user', user.id);
+    } catch (auditError) {
+      console.error('Password reset audit event failed:', auditError.message);
+    }
+    send(response, 200, { ok: true, message: 'Password reset successfully. Sign in with your new password.' });
     return;
   }
 

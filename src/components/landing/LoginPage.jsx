@@ -82,7 +82,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-800" htmlFor="login-password">Password</label>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label className="block text-sm font-semibold text-gray-800" htmlFor="login-password">Password</label>
+                <a className="text-xs font-semibold text-violet-700 underline underline-offset-4 hover:text-violet-900" href="#forgot-password">Forgot password?</a>
+              </div>
               <div className={`flex h-12 items-center gap-3 border bg-white px-3.5 transition-colors focus-within:border-[#367c69] ${errors.password ? 'border-rose-500' : 'border-gray-300'}`}>
                 <LockKeyhole size={18} className="shrink-0 text-gray-500" aria-hidden="true" />
                 <input className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" id="login-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" maxLength={128} value={password} onChange={(event) => { setPassword(event.target.value); setErrors((current) => ({ ...current, password: '', form: '' })); }} placeholder="Your password" aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} />

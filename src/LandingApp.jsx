@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import PosApp from './App.jsx';
 import AdminDashboard from './components/admin/AdminDashboard.jsx';
 import ChangePasswordPage from './components/landing/ChangePasswordPage.jsx';
+import PasswordResetPage from './components/landing/PasswordResetPage.jsx';
 import LoginPage from './components/landing/LoginPage.jsx';
 import LandingPage from './components/landing/LandingPage.jsx';
 import { apiUrl } from './api.js';
@@ -24,7 +25,7 @@ function RoutedApp({ route, setRoute, user, setUser }) {
     const syncRoute = async () => {
       const target = window.location.hash.slice(1) || 'home';
       if (target !== 'pos' && target !== 'admin' && target !== 'change-password') {
-        if (active) setRoute(target === 'login' ? 'login' : 'home');
+        if (active) setRoute(target === 'login' ? 'login' : target === 'forgot-password' ? 'forgot-password' : 'home');
         return;
       }
 
@@ -91,6 +92,7 @@ function RoutedApp({ route, setRoute, user, setUser }) {
       if (window.location.hash !== `#${destination}`) window.location.hash = `#${destination}`;
     }} />;
   }
+  if (route === 'forgot-password') return <PasswordResetPage />;
   if (route === 'pos') return <PosApp />;
   if (route === 'login') return <LoginPage />;
   return <LandingPage />;
