@@ -11,8 +11,17 @@ Configure these backend secrets in the hosting provider:
 - `ADMIN_INITIAL_PASSWORD`: Strong initial password for `imoka@technology.com`. The account is created only if that email does not yet exist.
 - `CORS_ORIGINS`: Exact Vercel production origin, plus any preview origin that needs API access, comma-separated.
 - `PORT`: Usually provided by the hosting platform; otherwise defaults to 3000.
+- `SMTP_HOST`: Gmail SMTP host, `smtp.gmail.com`.
+- `SMTP_PORT`: Gmail implicit TLS port, `465`.
+- `SMTP_SECURE`: `true` when using port 465.
+- `SMTP_USER`: `imokaprints@gmail.com`.
+- `SMTP_APP_PASSWORD`: A newly generated Google app password. Do not reuse an app password shared in chat.
+- `SMTP_FROM`: `Imoka Co Ltd <imokaprints@gmail.com>`.
+- `SHIFT_EMAIL_TO`: Notification recipient, `imokaprints@gmail.com`.
 
 Do not commit real URLs or passwords. The database URL previously shared in conversation should be rotated in Neon before deployment. Put replacement credentials only in the hosting provider's secret settings.
+
+Create a local `backend/.env` from `backend/.env.example` and fill its SMTP app password privately. The local start script reads this ignored file; Vercel does not read repository `.env` files, so add each SMTP variable under the Vercel project's backend environment-variable settings for the environments where notifications should run.
 
 ## Deploying this backend to Vercel
 

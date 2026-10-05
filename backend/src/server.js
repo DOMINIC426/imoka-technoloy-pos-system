@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { sendShiftEmail } from './shiftEmail.js';
 
 const prisma = new PrismaClient();
 const port = Number(process.env.PORT || 3000);
@@ -108,6 +109,40 @@ async function addAudit(session, action, entity, entityId = null, details = {}) 
       details
     }
   });
+}
+
+function darEsSalaamDayBounds(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Dar_es_Salaam',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const dateParts = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  const localMidnightUtc = Date.UTC(Number(dateParts.year), Number(dateParts.month) - 1, Number(dateParts.day)) - 3 * 60 * 60 * 1000;
+  return { start: new Date(localMidnightUtc), end: new Date(localMidnightUtc + 24 * 60 * 60 * 1000) };
+}
+
+async function getStockAvailability() {
+  const where = { active: true, stockTracked: true };
+  const [trackedProducts, inStockProducts] = await Promise.all([
+    prisma.product.count({ where }),
+    prisma.product.count({ where: { ...where, stock: { gt: 0 } } })
+  ]);
+  return {
+    trackedProducts,
+    inStockProducts,
+    stockAvailabilityPercent: trackedProducts ? Math.round(inStockProducts / trackedProducts * 100) : 0
+  };
+}
+
+async function notifyShiftEmail(details) {
+  try {
+    const sent = await sendShiftEmail(details);
+    if (!sent) console.warn('Shift notification email was skipped because SMTP credentials are not configured.');
+  } catch (error) {
+    console.error('Shift notification email failed:', error.message);
+  }
 }
 
 function requireAdmin(session, response) {
@@ -258,7 +293,21 @@ async function handle(request, response) {
         }
       }
       await prisma.session.update({ where: { id: session.id }, data: { shiftId: shift.id } });
-      if (!existing) await addAudit(session, 'shift.opened', 'shift', shift.id);
+      if (!existing) {
+        await addAudit(session, 'shift.opened', 'shift', shift.id);
+        try {
+          const stock = await getStockAvailability();
+          await notifyShiftEmail({
+            type: 'opened',
+            cashierName: `${session.user.firstName} ${session.user.lastName}`,
+            shiftId: shift.id,
+            openedAt: shift.openedAt,
+            ...stock
+          });
+        } catch (error) {
+          console.error('Could not prepare shift-open email:', error.message);
+        }
+      }
       send(response, existing ? 200 : 201, { shift: { id: shift.id, userId: shift.userId, userName: `${session.user.firstName} ${session.user.lastName}`, openedAt: shift.openedAt, closedAt: shift.closedAt, collected: 0 } });
       return;
     }
@@ -272,10 +321,32 @@ async function handle(request, response) {
         const collected = sales.reduce((sum, sale) => sum + Number(sale.total), 0);
         const updatedShift = await transaction.shift.update({ where: { id: shift.id }, data: { closedAt: new Date() } });
         await transaction.session.updateMany({ where: { shiftId: shift.id }, data: { shiftId: null } });
-        return { shift: updatedShift, collected };
+        return { shift: updatedShift, collected, transactionCount: sales.length };
       });
       if (!closed) return send(response, 409, { error: 'There is no open shift to close.' });
       await addAudit(session, 'shift.closed', 'shift', closed.shift.id, { collected: closed.collected });
+      try {
+        const { start, end } = darEsSalaamDayBounds(closed.shift.closedAt);
+        const [dailySales, dailyTransactions, stock] = await Promise.all([
+          prisma.sale.aggregate({ where: { createdAt: { gte: start, lt: end } }, _sum: { total: true } }),
+          prisma.sale.count({ where: { createdAt: { gte: start, lt: end } } }),
+          getStockAvailability()
+        ]);
+        await notifyShiftEmail({
+          type: 'closed',
+          cashierName: `${session.user.firstName} ${session.user.lastName}`,
+          shiftId: closed.shift.id,
+          openedAt: closed.shift.openedAt,
+          closedAt: closed.shift.closedAt,
+          shiftSales: closed.collected,
+          shiftTransactions: closed.transactionCount,
+          dailySales: Number(dailySales._sum.total || 0),
+          dailyTransactions,
+          ...stock
+        });
+      } catch (error) {
+        console.error('Could not prepare shift-close email:', error.message);
+      }
       send(response, 200, { shift: { ...closed.shift, collected: closed.collected } });
       return;
     }

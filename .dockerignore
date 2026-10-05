@@ -4,3 +4,8 @@ dist
 .gitignore
 Dockerfile
 **/node_modules
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
