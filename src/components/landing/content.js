@@ -7,11 +7,11 @@ import printingImage from '../../images/printing.jpg';
 export const heroImage = graphicsImage;
 
 export const services = [
-  { icon: 'brand', title: 'Branding', description: 'Build a distinctive identity your customers recognize.', image: brandingImage },
-  { icon: 'print', title: 'Printing', description: 'Bring your ideas to life with quality, made-to-fit print.', image: printingImage },
-  { icon: 'stationery', title: 'Stationery', description: 'Keep your business memorable in every detail and handoff.', image: businessCardImage },
-  { icon: 'design', title: 'Graphics Design', description: 'Make your message clear with thoughtful visual design.', image: graphicsImage },
-  { icon: 'internet', title: 'Internet Services', description: 'Stay connected with internet solutions for your business.', image: internetImage }
+  { icon: 'brand', title: 'Branding', image: brandingImage },
+  { icon: 'print', title: 'Printing', image: printingImage },
+  { icon: 'stationery', title: 'Stationery', image: businessCardImage },
+  { icon: 'design', title: 'Graphics Design', image: graphicsImage },
+  { icon: 'internet', title: 'Internet Services', image: internetImage }
 ];
 
 export const products = [

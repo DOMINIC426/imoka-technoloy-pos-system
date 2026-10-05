@@ -2,22 +2,24 @@ import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight, Brush, FileText, MonitorSmartphone, Printer, Wifi } from 'lucide-react';
 import { services } from '../content.js';
+import { useLanguage } from '../language.js';
 
 const icons = { brand: Brush, print: Printer, stationery: FileText, design: MonitorSmartphone, internet: Wifi };
 
 export default function Services() {
   const [activeServiceIndex, setActiveServiceIndex] = useState(0);
   const reduceMotion = useReducedMotion();
+  const { copy } = useLanguage();
   const activeService = services[activeServiceIndex];
 
   return (
     <section className="mx-auto w-[min(1240px,calc(100%-64px))] py-20 max-[680px]:w-[calc(100%-36px)] max-[680px]:pb-[70px] max-[680px]:pt-[67px]" id="services">
       <div className="mb-[35px] flex items-end justify-between gap-10 max-[680px]:mb-[25px] max-[680px]:block">
-        <div><p className="mb-[13px] text-[11px] font-bold uppercase tracking-[.12em] text-blue-600">What we do</p><h2 className="m-0 text-[52px] font-bold uppercase leading-[.91] text-gray-900 [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">Good work, <span className="text-blue-600">all under one roof.</span></h2></div>
-        <p className="mb-1 max-w-[350px] text-[13px] leading-[1.8] text-gray-600 max-[680px]:mt-4 max-[680px]:text-xs">We bring the creative thinking and practical tools your business needs to show up with confidence.</p>
+        <div><p className="mb-[13px] text-[11px] font-bold uppercase tracking-[.12em] text-blue-600">{copy.services.eyebrow}</p><h2 className="m-0 text-[52px] font-bold uppercase leading-[.91] text-gray-900 [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">{copy.services.title} <span className="text-blue-600">{copy.services.titleAccent}</span></h2></div>
+        <p className="mb-1 max-w-[350px] text-[13px] leading-[1.8] text-gray-600 max-[680px]:mt-4 max-[680px]:text-xs">{copy.services.intro}</p>
       </div>
       <div className="grid grid-cols-[.72fr_1.28fr] gap-5 max-[760px]:grid-cols-1">
-        <div className="grid content-start gap-2 max-[760px]:grid-cols-2 max-[420px]:gap-1.5" role="tablist" aria-label="Our services">
+        <div className="grid content-start gap-2 max-[760px]:grid-cols-2 max-[420px]:gap-1.5" role="tablist" aria-label={copy.services.tabList}>
           {services.map((service, index) => {
             const Icon = icons[service.icon];
             const selected = activeServiceIndex === index;
@@ -45,7 +47,7 @@ export default function Services() {
                 className={`flex min-h-[70px] items-center gap-3 border px-4 py-3 text-left transition-colors max-[420px]:min-h-[62px] max-[420px]:gap-2 max-[420px]:px-2.5 ${selected ? 'border-black bg-black text-white' : 'border-gray-200 bg-white text-gray-800 hover:border-gray-400'}`}
               >
                 <Icon className="shrink-0" size={19} strokeWidth={1.8} />
-                <span className="min-w-0 flex-1"><span className="block text-sm font-semibold max-[420px]:text-xs">{service.title}</span><span className={`mt-1 block text-[10px] ${selected ? 'text-gray-300' : 'text-gray-500'}`}>{service.description}</span></span>
+                <span className="min-w-0 flex-1"><span className="block text-sm font-semibold max-[420px]:text-xs">{service.title}</span><span className={`mt-1 block text-[10px] ${selected ? 'text-gray-300' : 'text-gray-500'}`}>{copy.services.descriptions[index]}</span></span>
                 <span className="text-xs opacity-60">0{index + 1}</span>
               </button>
             );
@@ -64,11 +66,11 @@ export default function Services() {
             >
               <img className="absolute inset-0 size-full object-cover" src={activeService.image} alt={`${activeService.title} by Imoka Technology`} />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-gray-950/20 to-gray-950/10" />
-              <div className="absolute left-6 top-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-white/80"><span className="h-px w-6 bg-blue-400" /> Imoka services <span className="text-blue-300">/ 0{activeServiceIndex + 1}</span></div>
+              <div className="absolute left-6 top-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-white/80"><span className="h-px w-6 bg-blue-400" /> {copy.services.showcaseLabel} <span className="text-blue-300">/ 0{activeServiceIndex + 1}</span></div>
               <div className="absolute bottom-0 left-0 right-0 p-7 text-white max-[420px]:p-5">
                 <h3 className="mb-2 text-4xl font-bold leading-none [font-family:'Barlow_Condensed',sans-serif] max-[420px]:text-3xl">{activeService.title}</h3>
-                <p className="mb-5 max-w-md text-sm leading-6 text-white/80">{activeService.description}</p>
-                <a className="inline-flex min-h-11 items-center gap-3 bg-black px-4 text-xs font-bold uppercase text-white no-underline transition-transform hover:-translate-y-0.5" href="#contact">Request a quote <ArrowUpRight size={16} /></a>
+                <p className="mb-5 max-w-md text-sm leading-6 text-white/80">{copy.services.descriptions[activeServiceIndex]}</p>
+                <a className="inline-flex min-h-11 items-center gap-3 bg-black px-4 text-xs font-bold uppercase text-white no-underline transition-transform hover:-translate-y-0.5" href="#contact">{copy.services.requestQuote} <ArrowUpRight size={16} /></a>
               </div>
             </motion.div>
           </AnimatePresence>
