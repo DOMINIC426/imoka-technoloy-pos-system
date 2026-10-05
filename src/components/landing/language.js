@@ -3,6 +3,7 @@ import { createContext, createElement, useContext, useEffect, useState } from 'r
 const translations = {
   en: {
     language: { switchToEnglish: 'Switch language to English', switchToSwahili: 'Switch language to Kiswahili', openMenu: 'Open navigation', closeMenu: 'Close navigation' },
+    details: { close: 'Close details', view: 'View details', requestQuote: 'Request a quote' },
     nav: { home: 'Home', services: 'Services', products: 'Products', portfolio: 'Portfolio', contact: 'Contact', main: 'Main navigation' },
     hero: {
       studio: 'Creative studio',
@@ -38,7 +39,13 @@ const translations = {
       title: 'From first impression',
       titleAccent: 'to final detail.',
       cta: 'Tell us what you need',
-      categories: ['Print essentials', 'Identity & support', 'Signs & displays', 'Connectivity']
+      categories: ['Print essentials', 'Identity & support', 'Signs & displays', 'Connectivity'],
+      descriptions: [
+        'Create a polished first impression with custom business cards designed for your brand.',
+        'Bring your brand to life with a consistent visual identity for your business.',
+        'Make your message visible with large-format printing for signs and displays.',
+        'Get reliable internet services that help your team and business stay connected.'
+      ]
     },
     portfolio: {
       eyebrow: 'Selected work',
@@ -47,6 +54,11 @@ const translations = {
       intro: 'A glimpse of the details, color and craft we bring to every project.',
       titles: ['A brand people remember', 'Print with presence', 'Ideas made visible'],
       types: ['Brand identity', 'Large format printing', 'Creative design'],
+      descriptions: [
+        'A distinctive identity system created to make a business instantly recognizable.',
+        'Bold, high-quality large-format printing that helps your message stand out.',
+        'Clear, purposeful graphics that turn ideas into visual communication.'
+      ],
       discuss: 'Discuss a project like'
     },
     contact: {
@@ -62,6 +74,7 @@ const translations = {
   },
   sw: {
     language: { switchToEnglish: 'Badilisha lugha iwe Kiingereza', switchToSwahili: 'Badilisha lugha iwe Kiswahili', openMenu: 'Fungua menyu', closeMenu: 'Funga menyu' },
+    details: { close: 'Funga maelezo', view: 'Tazama maelezo', requestQuote: 'Omba makadirio' },
     nav: { home: 'Mwanzo', services: 'Huduma', products: 'Bidhaa', portfolio: 'Kazi zetu', contact: 'Wasiliana', main: 'Menyu kuu' },
     hero: {
       studio: 'Studio ya ubunifu',
@@ -97,7 +110,13 @@ const translations = {
       title: 'Kuanzia mvuto wa kwanza',
       titleAccent: 'hadi maelezo ya mwisho.',
       cta: 'Tuambie unachohitaji',
-      categories: ['Mahitaji ya uchapishaji', 'Utambulisho na msaada', 'Mabango na maonyesho', 'Muunganisho wa intaneti']
+      categories: ['Mahitaji ya uchapishaji', 'Utambulisho na msaada', 'Mabango na maonyesho', 'Muunganisho wa intaneti'],
+      descriptions: [
+        'Tengeneza mwonekano wa kwanza wa kitaalamu kwa kadi za biashara zinazolingana na chapa yako.',
+        'Jenga utambulisho wa picha unaoleta chapa ya biashara yako pamoja.',
+        'Fikisha ujumbe wako kwa uchapishaji wa mabango na maonyesho ya ukubwa mkubwa.',
+        'Pata huduma ya intaneti inayosaidia timu na biashara yako kuendelea kuwasiliana.'
+      ]
     },
     portfolio: {
       eyebrow: 'Baadhi ya kazi zetu',
@@ -106,6 +125,11 @@ const translations = {
       intro: 'Angalia umakini, rangi na ubora tunaoweka katika kila mradi.',
       titles: ['Chapa inayokumbukwa', 'Uchapishaji unaovutia', 'Mawazo yanayoonekana'],
       types: ['Utambulisho wa chapa', 'Uchapishaji wa ukubwa mkubwa', 'Ubunifu wa picha'],
+      descriptions: [
+        'Mfumo wa kipekee wa utambulisho unaosaidia biashara kutambulika kwa urahisi.',
+        'Uchapishaji wa ukubwa mkubwa wenye ubora unaosaidia ujumbe wako kujitokeza.',
+        'Ubunifu wa picha ulio wazi na wenye kusudi unaogeuza mawazo kuwa mawasiliano ya kuona.'
+      ],
       discuss: 'Jadili mradi kama'
     },
     contact: {
