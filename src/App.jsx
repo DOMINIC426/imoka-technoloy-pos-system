@@ -1,15 +1,24 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleDollarSign, Home, LogOut, Search, Settings2 } from 'lucide-react';
+import { BarChart3, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleDollarSign, Home, Search, Settings2 } from 'lucide-react';
 import { initializeLegacyApp } from '../imkoka.js';
 import { apiUrl } from './api.js';
 import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, panelClass, smallButtonClass, tableClass } from './uiClasses.js';
+import UserMenu from './components/ui/UserMenu.jsx';
 
 const navButtonClass = 'flex w-full items-center gap-3 rounded-md border border-transparent bg-transparent px-3.5 py-3 text-left text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 [&.active]:border-violet-100 [&.active]:bg-violet-50 [&.active]:text-violet-700';
 const cashierNavigation = [
   { title: 'Workspace', items: [{ id: 'dashboard', label: 'Dashboard', icon: Home }, { id: 'shift', label: 'Shift', icon: BriefcaseBusiness }, { id: 'sales', label: 'Sales / POS', icon: CircleDollarSign }] },
   { title: 'Operations', items: [{ id: 'expenses', label: 'Expenses', icon: Settings2 }, { id: 'reports', label: 'Reports', icon: BarChart3 }] }
 ];
+
+function readSessionUser() {
+  try {
+    return JSON.parse(sessionStorage.getItem('imoka_pos_user') || 'null');
+  } catch {
+    return null;
+  }
+}
 
 export default function App() {
   return <CashierApp />;
@@ -18,6 +27,7 @@ export default function App() {
 function CashierApp() {
   const [expanded, setExpanded] = useState(() => localStorage.getItem('imoka_cashier_sidebar_collapsed') !== 'true');
   const [search, setSearch] = useState('');
+  const [currentUser] = useState(readSessionUser);
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 700px)');
@@ -83,10 +93,9 @@ function CashierApp() {
         
         <div className="mt-auto border-t border-white/15 pt-3">
           <div className={`mb-2 flex items-center gap-2.5 rounded-lg bg-gray-50 p-2 ${expanded ? '' : 'justify-center'}`}>
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-100 font-bold text-violet-700">U</span>
-            {expanded && <div className="min-w-0"><strong className="block truncate text-xs" id="currentUserName">Cashier</strong><small className="block truncate text-[10px] text-gray-500" id="currentUserEmail">Active session</small></div>}
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">{currentUser?.firstName?.[0]}{currentUser?.lastName?.[0]}</span>
+            {expanded && <div className="min-w-0"><strong className="block truncate text-xs" id="currentUserName">{currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Cashier'}</strong><small className="block truncate text-[10px] text-gray-500" id="currentUserEmail">{currentUser?.email || 'Active session'}</small></div>}
           </div>
-          <button type="button" onClick={signOut} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 ${expanded ? '' : 'justify-center px-0'}`} title="Sign out"><LogOut size={18} className="shrink-0" />{expanded && <span>Sign out</span>}</button>
         </div>
       </motion.aside>
 
@@ -94,11 +103,9 @@ function CashierApp() {
         <header className="topbar sticky top-0 z-[4] flex h-[70px] items-center justify-between border-b border-gray-200 bg-white px-7 max-[700px]:gap-2 max-[700px]:px-[15px]">
           <strong className="text-lg max-[420px]:text-[15px]" id="pageTitle">Dashboard</strong>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <a className={`${smallButtonClass} no-underline`} href="#home">Website</a>
-              <button className={smallButtonClass} onClick={signOut}>Sign out</button>
-            </div>
             <div className="whitespace-nowrap text-sm max-[700px]:text-[11px]" id="clock"></div>
+            <a className={`${smallButtonClass} no-underline max-[500px]:hidden`} href="#home">Website</a>
+            <UserMenu user={currentUser} onSignOut={signOut} />
           </div>
         </header>
 

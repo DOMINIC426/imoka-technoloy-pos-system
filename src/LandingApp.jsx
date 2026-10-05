@@ -39,7 +39,9 @@ function RoutedApp({ route, setRoute, user, setUser }) {
         const response = await fetch(apiUrl('/api/auth/session'), { headers: { Authorization: `Bearer ${token}` } });
         if (!response.ok) throw new Error('Session expired.');
         const result = await response.json();
-        const authorizedRoute = result.user.mustChangePassword ? 'change-password' : result.user.role === 'admin' ? 'admin' : 'pos';
+        const authorizedRoute = result.user.mustChangePassword || target === 'change-password'
+          ? 'change-password'
+          : result.user.role === 'admin' ? 'admin' : 'pos';
         if (active) {
           setUser(result.user);
           setRoute(authorizedRoute);

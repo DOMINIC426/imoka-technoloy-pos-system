@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock3, Download, FileClock, Home, LayoutDashboard, LogOut, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock3, Download, FileClock, Home, LayoutDashboard, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import { apiUrl } from '../../api.js';
 import { confirmAction } from '../ui/FeedbackProvider.jsx';
+import UserMenu from '../ui/UserMenu.jsx';
 
 const money = value => `TZS ${Number(value || 0).toLocaleString('en-TZ', { maximumFractionDigits: 2 })}`;
 const dateTime = value => value ? new Date(value).toLocaleString() : 'In progress';
@@ -243,14 +244,14 @@ export default function AdminDashboard({ token, user, onSignOut }) {
         <nav className="grid content-start gap-5 overflow-y-auto" aria-label="Admin navigation">
           {filteredGroups.map(group => <div key={group.title}>{sidebarExpanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-gray-400">{group.title}</p>}<div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setActivePage(id)} className={`flex w-full items-center gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors ${sidebarExpanded ? '' : 'justify-center px-0'} ${activePage === id ? 'border-violet-100 bg-violet-50 text-violet-700' : 'border-transparent bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`} aria-current={activePage === id ? 'page' : undefined} title={sidebarExpanded ? undefined : label}><Icon size={18} aria-hidden="true" /><span className={sidebarExpanded ? 'truncate' : 'sr-only'}>{label}</span></button>)}</div></div>)}
         </nav>
-        <div className="mt-auto border-t border-gray-200 pt-3"><div className={`mb-2 flex items-center gap-2.5 rounded-lg bg-gray-50 p-2 ${sidebarExpanded ? '' : 'justify-center'}`}><span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">{user.firstName?.[0]}{user.lastName?.[0]}</span>{sidebarExpanded && <span className="min-w-0 flex-1"><strong className="block truncate text-xs">{user.firstName} {user.lastName}</strong><small className="text-[10px] text-gray-500">Administrator</small></span>}</div><button type="button" onClick={onSignOut} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 ${sidebarExpanded ? '' : 'justify-center px-0'}`} title="Sign out"><LogOut size={17} /><span className={sidebarExpanded ? '' : 'sr-only'}>Sign out</span></button></div>
+        <div className="mt-auto border-t border-gray-200 pt-3"><div className={`mb-2 flex items-center gap-2.5 rounded-lg bg-gray-50 p-2 ${sidebarExpanded ? '' : 'justify-center'}`}><span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">{user.firstName?.[0]}{user.lastName?.[0]}</span>{sidebarExpanded && <span className="min-w-0 flex-1"><strong className="block truncate text-xs">{user.firstName} {user.lastName}</strong><small className="text-[10px] text-gray-500">Administrator</small></span>}</div></div>
       </motion.aside>
 
       {sidebarExpanded && <button className="fixed inset-0 z-10 hidden bg-gray-950/25 max-[700px]:block" type="button" aria-label="Close navigation menu" onClick={toggleSidebar} />}
       <main className={`min-h-screen transition-[margin] duration-300 ${sidebarExpanded ? 'ml-[276px] max-[700px]:ml-[92px]' : 'ml-[92px]'}`}>
         <header className="sticky top-0 z-10 flex min-h-[72px] items-center justify-between border-b border-gray-200 bg-white px-8 max-[700px]:px-4">
           <div><p className="m-0 text-[10px] font-bold uppercase tracking-[.15em] text-violet-600">Imoka Technology</p><h1 className="mt-1 text-xl font-semibold">{navItems.find(item => item.id === activePage)?.label}</h1></div>
-          <div className="flex items-center gap-2 text-sm text-gray-600"><span className="grid size-8 place-items-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">{user.firstName?.[0]}{user.lastName?.[0]}</span><span className="max-[500px]:hidden">Administrator</span></div>
+          <UserMenu user={user} onSignOut={onSignOut} />
         </header>
 
         <section className="mx-auto max-w-[1400px] p-8 max-[700px]:p-4">
