@@ -367,8 +367,7 @@ function saveSale(printIt) {
         }).then(response => {
             if (!response.ok) throw new Error('Sale sync failed');
             return response.json();
-        }).then(async response => {
-            const result = await response.json();
+        }).then(result => {
             if (result.duplicate) return;
             result.products?.forEach(updatedProduct => {
                 const product = db.products.find(item => item.id === updatedProduct.id);

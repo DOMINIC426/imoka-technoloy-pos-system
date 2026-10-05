@@ -157,7 +157,7 @@ function CashierApp() {
                 <div className="mt-4 grid gap-2">
                   <select className={inputClass} id="paymentMethod"><option>Cash</option><option>Mobile Money</option><option>Card</option><option>Bank Transfer</option></select>
                   <input className={inputClass} id="amountPaid" type="number" min="0" placeholder="Amount paid" />
-                  <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="completeSaleBtn">Complete sale &amp; print</button>
+                  <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="completeSaleBtn" onClick={() => window.completeSale()}>Complete sale &amp; print</button>
                   <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50" id="holdOrderBtn">Hold order</button>
                 </div>
               </div></div>
