@@ -2,8 +2,8 @@ import { createContext, createElement, useContext, useEffect, useState } from 'r
 
 const translations = {
   en: {
-    language: { label: 'Choose language', english: 'English', swahili: 'Kiswahili', openMenu: 'Open navigation', closeMenu: 'Close navigation' },
-    nav: { home: 'Home', services: 'Services', products: 'Products', portfolio: 'Portfolio', contact: 'Contact', openPos: 'Open POS', main: 'Main navigation' },
+    language: { switchToEnglish: 'Switch language to English', switchToSwahili: 'Switch language to Kiswahili', openMenu: 'Open navigation', closeMenu: 'Close navigation' },
+    nav: { home: 'Home', services: 'Services', products: 'Products', portfolio: 'Portfolio', contact: 'Contact', main: 'Main navigation' },
     hero: {
       studio: 'Creative studio',
       tagline: 'Creative solutions for your business',
@@ -61,8 +61,8 @@ const translations = {
     footer: { copyright: 'Imoka Technology. Built with purpose.' }
   },
   sw: {
-    language: { label: 'Chagua lugha', english: 'English', swahili: 'Kiswahili', openMenu: 'Fungua menyu', closeMenu: 'Funga menyu' },
-    nav: { home: 'Mwanzo', services: 'Huduma', products: 'Bidhaa', portfolio: 'Kazi zetu', contact: 'Wasiliana', openPos: 'Fungua POS', main: 'Menyu kuu' },
+    language: { switchToEnglish: 'Badilisha lugha iwe Kiingereza', switchToSwahili: 'Badilisha lugha iwe Kiswahili', openMenu: 'Fungua menyu', closeMenu: 'Funga menyu' },
+    nav: { home: 'Mwanzo', services: 'Huduma', products: 'Bidhaa', portfolio: 'Kazi zetu', contact: 'Wasiliana', main: 'Menyu kuu' },
     hero: {
       studio: 'Studio ya ubunifu',
       tagline: 'Suluhisho bunifu kwa biashara yako',

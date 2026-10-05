@@ -12,7 +12,7 @@ const links = [
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { language, setLanguage, copy } = useLanguage();
+  const { copy } = useLanguage();
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-gray-900 text-white">
@@ -32,7 +32,6 @@ export default function Navbar() {
             <a key={key} className={`relative py-2 text-[13px] text-gray-200 no-underline after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-blue-600 after:transition-transform hover:text-white hover:after:scale-x-100 max-[680px]:py-[13px] max-[680px]:after:hidden${index === 0 ? ' text-white after:scale-x-100' : ''}`} href={href} onClick={() => setMenuOpen(false)}>{copy.nav[key]}</a>
           ))}
           <LanguageSwitch className="max-[680px]:hidden" />
-          <a className="inline-flex items-center justify-between gap-4 bg-black px-[15px] py-[11px] text-xs font-bold text-white no-underline transition-transform hover:-translate-y-0.5 max-[680px]:mt-2" href="#pos">{copy.nav.openPos} <span aria-hidden="true">↗</span></a>
         </div>
       </nav>
     </header>
@@ -41,10 +40,16 @@ export default function Navbar() {
 
 function LanguageSwitch({ className = '' }) {
   const { language, setLanguage, copy } = useLanguage();
+  const nextLanguage = language === 'en' ? 'sw' : 'en';
   return (
-    <div className={`inline-flex items-center gap-0.5 border border-white/20 bg-black p-1 ${className}`} role="group" aria-label={copy.language.label}>
-      <button className={`min-w-9 px-2 py-1 text-[10px] font-bold tracking-wide text-white ${language === 'en' ? 'ring-1 ring-blue-500' : 'text-white/60'}`} type="button" aria-label={copy.language.english} aria-pressed={language === 'en'} onClick={() => setLanguage('en')}>EN</button>
-      <button className={`min-w-9 px-2 py-1 text-[10px] font-bold tracking-wide text-white ${language === 'sw' ? 'ring-1 ring-blue-500' : 'text-white/60'}`} type="button" aria-label={copy.language.swahili} aria-pressed={language === 'sw'} onClick={() => setLanguage('sw')}>SW</button>
-    </div>
+    <button
+      className={`grid size-11 shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-[25px] leading-none shadow-sm transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${className}`}
+      type="button"
+      aria-label={language === 'en' ? copy.language.switchToSwahili : copy.language.switchToEnglish}
+      title={language === 'en' ? copy.language.switchToSwahili : copy.language.switchToEnglish}
+      onClick={() => setLanguage(nextLanguage)}
+    >
+      <span aria-hidden="true">{language === 'en' ? '🇬🇧' : '🇹🇿'}</span>
+    </button>
   );
 }
