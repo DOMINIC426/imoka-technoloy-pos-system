@@ -125,8 +125,8 @@ function CashierApp() {
                 <div><span className="block text-xs text-gray-500">Opened at</span><strong className="mt-1 block text-sm" id="shiftOpenedAt">Not open</strong></div>
                 <div><span className="block text-xs text-gray-500">Collected this shift</span><strong className="mt-1 block text-sm" id="shiftCollected">TZS 0</strong></div>
               </div>
-              <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="openShiftButton">Open shift</button>
-              <button className="ml-2 inline-flex items-center justify-center gap-2 rounded-md border border-red-200 bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700" id="closeShiftButton">Close shift</button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50" id="openShiftButton" onClick={() => window.openShift()}>Open shift</button>
+              <button className="ml-2 inline-flex items-center justify-center gap-2 rounded-md border border-red-200 bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" id="closeShiftButton" onClick={() => window.closeShift()}>Close shift</button>
             </div>
           </section>
 

@@ -704,7 +704,7 @@ Object.assign(window, {
     exportSales, openCustomerModal, openExpenseModal, openProductModal,
     printReceiptById, removeCart, renderCart, renderCustomers, renderInventory,
     renderPOS, renderProducts, renderReports, resetDemo, saveCustomer, saveExpense,
-    openShift, saveProduct, saveSale, saveSettings, setQty, showPage
+    closeShift, openShift, saveProduct, saveSale, saveSettings, setQty, showPage
 });
 
 return () => clearInterval(clockTimer);
