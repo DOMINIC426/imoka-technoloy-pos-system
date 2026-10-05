@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../language.js';
 
@@ -41,15 +41,34 @@ export default function Navbar() {
 function LanguageSwitch({ className = '' }) {
   const { language, setLanguage, copy } = useLanguage();
   const nextLanguage = language === 'en' ? 'sw' : 'en';
+  const clipId = `language-flag-${useId()}`;
   return (
     <button
-      className={`grid size-11 shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-[25px] leading-none shadow-sm transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${className}`}
+      className={`grid size-11 shrink-0 place-items-center rounded-full border border-gray-200 bg-white shadow-sm transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${className}`}
       type="button"
       aria-label={language === 'en' ? copy.language.switchToSwahili : copy.language.switchToEnglish}
       title={language === 'en' ? copy.language.switchToSwahili : copy.language.switchToEnglish}
       onClick={() => setLanguage(nextLanguage)}
     >
-      <span aria-hidden="true">{language === 'en' ? '🇬🇧' : '🇹🇿'}</span>
+      <svg className="size-[28px] rounded-full" viewBox="0 0 36 36" aria-hidden="true">
+        <defs>
+          <clipPath id={clipId}><circle cx="18" cy="18" r="18" /></clipPath>
+        </defs>
+        <g clipPath={`url(#${clipId})`}>
+          {language === 'en' ? <>
+            <rect width="36" height="36" fill="#fff" />
+            {[0, 5.54, 11.08, 16.62, 22.16, 27.7, 33.24].map(y => <rect key={y} y={y} width="36" height="2.77" fill="#b22234" />)}
+            <rect width="16" height="19.4" fill="#3c3b6e" />
+            {[3, 8, 13].flatMap(y => [3, 8, 13].map(x => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.05" fill="#fff" />))}
+          </> : <>
+            <rect width="36" height="36" fill="#1eb53a" />
+            <path d="M36 0H0v36z" fill="#00a3dd" />
+            <path d="M0 22.5 36 0v13.5L0 36z" fill="#fcd116" />
+            <path d="M0 25.5 36 3v7.5L0 33z" fill="#000" />
+          </>}
+        </g>
+        <circle cx="18" cy="18" r="17.5" fill="none" stroke="#d1d5db" />
+      </svg>
     </button>
   );
 }
