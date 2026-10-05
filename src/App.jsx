@@ -5,7 +5,7 @@ import { initializeLegacyApp } from '../imkoka.js';
 import { apiUrl } from './api.js';
 import { buttonClass, emptyClass, fieldClass, formGridClass, inputClass, labelClass, modalActionsClass, panelClass, smallButtonClass, tableClass } from './uiClasses.js';
 
-const navButtonClass = 'flex w-full items-center gap-3 rounded-lg border border-teal-800 bg-teal-800 px-3.5 py-3 text-left text-sm text-white transition-colors hover:border-teal-700 hover:bg-teal-700';
+const navButtonClass = 'flex w-full items-center gap-3 rounded-md border border-transparent bg-transparent px-3.5 py-3 text-left text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 [&.active]:border-violet-100 [&.active]:bg-violet-50 [&.active]:text-violet-700';
 const cashierNavigation = [
   { title: 'Workspace', items: [{ id: 'dashboard', label: 'Dashboard', icon: Home }, { id: 'shift', label: 'Shift', icon: BriefcaseBusiness }, { id: 'sales', label: 'Sales / POS', icon: CircleDollarSign }] },
   { title: 'Operations', items: [{ id: 'expenses', label: 'Expenses', icon: Settings2 }, { id: 'reports', label: 'Reports', icon: BarChart3 }] }
@@ -57,40 +57,40 @@ function CashierApp() {
 
   return (
     <>
-    <div className="app flex min-h-screen bg-gray-50 text-gray-900 print:hidden">
+    <div className="app flex min-h-screen bg-[#f4f5f8] text-gray-900 print:hidden">
       {expanded && <button className="fixed inset-0 z-[9] hidden bg-gray-950/25 max-[700px]:block" type="button" aria-label="Close navigation menu" onClick={toggleSidebar} />}
       
-      <motion.aside animate={{ width: expanded ? 268 : 82 }} transition={{ type: 'spring', stiffness: 320, damping: 32 }} className="fixed inset-y-3 left-3 z-10 flex flex-col overflow-visible rounded-2xl bg-[#174e46] p-3.5 text-white shadow-xl">
+      <motion.aside animate={{ width: expanded ? 260 : 76 }} transition={{ type: 'spring', stiffness: 320, damping: 32 }} className="fixed inset-y-0 left-0 z-10 flex flex-col overflow-visible border-r border-gray-200 bg-white p-3.5 text-gray-800">
         <div className={`flex h-12 items-center ${expanded ? 'justify-between px-1' : 'justify-center'}`}>
           <a href="#home" className="flex min-w-0 items-center gap-3 text-white no-underline" title="Imoka POS">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#d2e7db] text-lg font-extrabold text-[#174e46]">I</span>
-            {expanded && <span className="min-w-0"><strong className="block truncate text-sm tracking-wide">IMOKA POS</strong><small className="block text-[9px] tracking-[.14em] text-white/65">CASHIER</small></span>}
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-violet-600 text-lg font-extrabold text-white">I</span>
+            {expanded && <span className="min-w-0"><strong className="block truncate text-sm tracking-wide">IMOKA POS</strong><small className="block text-[9px] tracking-[.14em] text-gray-500">CASHIER</small></span>}
           </a>
-          {expanded && <button className="grid size-8 shrink-0 place-items-center rounded-lg text-white/75 transition-colors hover:bg-white/10 hover:text-white" type="button" onClick={toggleSidebar}><ChevronLeft size={18} /></button>}
-          {!expanded && <button className="absolute -right-3 top-5 grid size-7 place-items-center rounded-full border border-white/80 bg-white text-[#174e46] shadow-lg" type="button" onClick={toggleSidebar}><ChevronRight size={14} /></button>}
+          {expanded && <button className="grid size-8 shrink-0 place-items-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" type="button" onClick={toggleSidebar}><ChevronLeft size={18} /></button>}
+          {!expanded && <button className="absolute -right-3 top-5 grid size-7 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm" type="button" onClick={toggleSidebar}><ChevronRight size={14} /></button>}
         </div>
         
-        <div className="my-4 h-px bg-white/15" />
+        <div className="my-4 h-px bg-gray-200" />
         
-        {expanded && <label className="mb-5 flex h-10 items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 text-white/60 focus-within:border-white/35"><Search size={15} /><input className="w-full bg-transparent text-sm text-white placeholder-white/50 focus:outline-none" placeholder="Search pages..." value={search} onChange={e => setSearch(e.target.value)} /></label>}
+        {expanded && <label className="mb-5 flex h-10 items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 text-gray-500 focus-within:border-violet-400"><Search size={15} /><input className="w-full bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none" placeholder="Search pages..." value={search} onChange={e => setSearch(e.target.value)} /></label>}
         
-        <nav className="grid content-start gap-5 overflow-y-auto" aria-label="Cashier navigation">
+        <nav className="nav grid content-start gap-5 overflow-y-auto" aria-label="Cashier navigation">
           {navigation.map(group => <div key={group.title}>
-            {expanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-white/55">{group.title}</p>}
+            {expanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-gray-400">{group.title}</p>}
             <div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" data-page={id} title={expanded ? undefined : label} className={`${navButtonClass} ${expanded ? '' : 'justify-center px-0'}`}><Icon size={18} className="shrink-0" />{expanded && <span className="truncate">{label}</span>}</button>)}</div>
           </div>)}
         </nav>
         
         <div className="mt-auto border-t border-white/15 pt-3">
-          <div className={`mb-2 flex items-center gap-2.5 rounded-xl bg-white/10 p-2 ${expanded ? '' : 'justify-center'}`}>
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#d2e7db] font-bold text-[#174e46]">U</span>
-            {expanded && <div className="min-w-0"><strong className="block truncate text-xs" id="currentUserName">Cashier</strong><small className="block truncate text-[10px] text-white/65" id="currentUserEmail">Active session</small></div>}
+          <div className={`mb-2 flex items-center gap-2.5 rounded-lg bg-gray-50 p-2 ${expanded ? '' : 'justify-center'}`}>
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-100 font-bold text-violet-700">U</span>
+            {expanded && <div className="min-w-0"><strong className="block truncate text-xs" id="currentUserName">Cashier</strong><small className="block truncate text-[10px] text-gray-500" id="currentUserEmail">Active session</small></div>}
           </div>
-          <button type="button" onClick={signOut} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white ${expanded ? '' : 'justify-center px-0'}`} title="Sign out"><LogOut size={18} className="shrink-0" />{expanded && <span>Sign out</span>}</button>
+          <button type="button" onClick={signOut} className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 ${expanded ? '' : 'justify-center px-0'}`} title="Sign out"><LogOut size={18} className="shrink-0" />{expanded && <span>Sign out</span>}</button>
         </div>
       </motion.aside>
 
-      <main className={`main min-w-0 flex-1 transition-[margin] duration-300 ${expanded ? 'ml-[292px] w-[calc(100%-292px)] max-[700px]:ml-[106px] max-[700px]:w-[calc(100%-106px)]' : 'ml-[106px] w-[calc(100%-106px)]'}`}>
+      <main className={`main min-w-0 flex-1 transition-[margin] duration-300 ${expanded ? 'ml-[276px] w-[calc(100%-276px)] max-[700px]:ml-[92px] max-[700px]:w-[calc(100%-92px)]' : 'ml-[92px] w-[calc(100%-92px)]'}`}>
         <header className="topbar sticky top-0 z-[4] flex h-[70px] items-center justify-between border-b border-gray-200 bg-white px-7 max-[700px]:gap-2 max-[700px]:px-[15px]">
           <strong className="text-lg max-[420px]:text-[15px]" id="pageTitle">Dashboard</strong>
           <div className="flex items-center gap-4">
@@ -118,14 +118,14 @@ function CashierApp() {
 
           <section id="shift" className="page hidden">
             <div className={`${panelClass} mt-0 max-w-[680px]`}>
-              <p className="mb-1 text-xs font-bold uppercase tracking-[.14em] text-teal-700">Cashier session</p>
+              <p className="mb-1 text-xs font-bold uppercase tracking-[.14em] text-violet-700">Cashier session</p>
               <h2 className="mb-2 text-xl font-semibold">Current shift</h2>
               <p className="mb-5 text-sm text-gray-500" id="shiftStatus">Checking shift status...</p>
               <div className="mb-5 grid grid-cols-2 gap-4 border-y border-gray-200 py-4 max-[500px]:grid-cols-1">
                 <div><span className="block text-xs text-gray-500">Opened at</span><strong className="mt-1 block text-sm" id="shiftOpenedAt">Not open</strong></div>
                 <div><span className="block text-xs text-gray-500">Collected this shift</span><strong className="mt-1 block text-sm" id="shiftCollected">TZS 0</strong></div>
               </div>
-              <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800" id="openShiftBtn">Open shift</button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="openShiftBtn">Open shift</button>
               <button className="ml-2 inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700" id="closeShiftBtn">Close shift</button>
             </div>
           </section>
@@ -150,8 +150,8 @@ function CashierApp() {
                 <div className="mt-4 grid gap-2">
                   <select className={inputClass} id="paymentMethod"><option>Cash</option><option>Mobile Money</option><option>Card</option><option>Bank Transfer</option></select>
                   <input className={inputClass} id="amountPaid" type="number" min="0" placeholder="Amount paid" />
-                  <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800" id="completeSaleBtn">Complete sale &amp; print</button>
-                  <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-700 bg-teal-700 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800" id="holdOrderBtn">Hold order</button>
+                  <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="completeSaleBtn">Complete sale &amp; print</button>
+                  <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50" id="holdOrderBtn">Hold order</button>
                 </div>
               </div></div>
             </div>

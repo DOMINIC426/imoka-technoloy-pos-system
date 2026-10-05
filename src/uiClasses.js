@@ -1,10 +1,10 @@
-const buttonBaseClass = 'inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 font-semibold text-white transition-colors hover:border-emerald-800 hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50';
+const buttonBaseClass = 'inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 font-semibold text-white transition-colors hover:border-violet-700 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50';
 export const buttonClass = `${buttonBaseClass} px-3.5 py-2.5 text-sm`;
 export const smallButtonClass = `${buttonBaseClass} px-2.5 py-1.5 text-xs`;
-export const editButtonClass = 'inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100';
+export const editButtonClass = 'inline-flex items-center justify-center gap-2 rounded-md border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100';
 export const deleteButtonClass = 'inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100';
-export const inputClass = 'w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100';
-export const panelClass = 'mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-[0_8px_28px_rgba(16,24,40,0.07)]';
+export const inputClass = 'w-full min-w-0 rounded-md border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100';
+export const panelClass = 'mt-5 rounded-lg border border-gray-200 bg-white p-5 shadow-sm';
 export const tableClass = 'w-full border-collapse text-left text-[13px] [&_th]:whitespace-nowrap [&_th]:border-b [&_th]:border-gray-200 [&_th]:bg-gray-50 [&_th]:p-3 [&_th]:font-semibold [&_th]:text-gray-500 [&_td]:whitespace-nowrap [&_td]:border-b [&_td]:border-gray-200 [&_td]:p-3';
 export const emptyClass = 'px-8 py-8 text-center text-gray-500';
 export const fieldClass = 'flex flex-col gap-1.5';
