@@ -84,7 +84,9 @@ function RoutedApp({ route, setRoute, user, setUser }) {
     return <ChangePasswordPage onPasswordChanged={updatedUser => {
       sessionStorage.setItem('imoka_pos_user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-      window.location.hash = updatedUser.role === 'admin' ? '#admin' : '#pos';
+      const destination = updatedUser.role === 'admin' ? 'admin' : 'pos';
+      setRoute(destination);
+      if (window.location.hash !== `#${destination}`) window.location.hash = `#${destination}`;
     }} />;
   }
   if (route === 'pos') return <PosApp />;
