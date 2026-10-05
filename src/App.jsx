@@ -105,10 +105,10 @@ function CashierApp() {
         <div className="content mx-auto w-full max-w-[1500px] p-[26px] max-[700px]:p-[15px] max-[420px]:p-3">
           <section id="dashboard" className="page">
             <div className="grid grid-cols-4 gap-[18px] max-[1000px]:grid-cols-2 max-[420px]:grid-cols-1">
-              <div className="rounded-[14px] border border-gray-200 bg-white p-5 shadow-[0_8px_28px_rgba(16,24,40,0.07)] max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Today's sales</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="dashTodaySales">TZS 0</div></div>
-              <div className="rounded-[14px] border border-gray-200 bg-white p-5 shadow-[0_8px_28px_rgba(16,24,40,0.07)] max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">This month</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="dashMonthSales">TZS 0</div></div>
-              <div className="rounded-[14px] border border-gray-200 bg-white p-5 shadow-[0_8px_28px_rgba(16,24,40,0.07)] max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Products</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="dashProducts">0</div></div>
-              <div className="rounded-[14px] border border-gray-200 bg-white p-5 shadow-[0_8px_28px_rgba(16,24,40,0.07)] max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Customers</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="dashCustomers">0</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Today's sales</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="mToday">TZS 0</div><div className="mt-1 text-xs text-gray-500" id="mTodayCount">0 transactions</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">This month</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="mMonth">TZS 0</div><div className="mt-1 text-xs text-gray-500">Gross sales</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Products</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="mProducts">0</div><div className="mt-1 text-xs text-gray-500" id="mLow">0 low-stock</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Customers</div><div className="mt-2 text-[26px] font-extrabold tracking-tight" id="mCustomers">0</div></div>
             </div>
             <div className={`${panelClass} mt-5`}>
               <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Recent sales</h2><button className={smallButtonClass} onClick={() => window.location.hash = '#sales'}>View all</button></div>
@@ -125,8 +125,8 @@ function CashierApp() {
                 <div><span className="block text-xs text-gray-500">Opened at</span><strong className="mt-1 block text-sm" id="shiftOpenedAt">Not open</strong></div>
                 <div><span className="block text-xs text-gray-500">Collected this shift</span><strong className="mt-1 block text-sm" id="shiftCollected">TZS 0</strong></div>
               </div>
-              <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="openShiftBtn">Open shift</button>
-              <button className="ml-2 inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700" id="closeShiftBtn">Close shift</button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="openShiftButton">Open shift</button>
+              <button className="ml-2 inline-flex items-center justify-center gap-2 rounded-md border border-red-200 bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700" id="closeShiftButton">Close shift</button>
             </div>
           </section>
 
@@ -134,7 +134,7 @@ function CashierApp() {
             <div className="grid grid-cols-[1.4fr_.6fr] gap-[18px] max-[1000px]:grid-cols-1">
               <div><div className={`${panelClass} mt-0`}>
                 <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">New sale</h2><button className={smallButtonClass} id="clearCartBtn">Clear cart</button></div>
-                <div className="flex flex-wrap gap-2.5 max-[700px]:w-full"><input className={`${inputClass} min-w-[180px] flex-1`} id="productSearch" placeholder="Search products..." /></div>
+                <div className="flex flex-wrap gap-2.5 max-[700px]:w-full"><input className={`${inputClass} min-w-[180px] flex-1`} id="productSearch" placeholder="Search products..." /><select className={`${inputClass} min-w-[180px] flex-1`} id="customerSelect" aria-label="Select customer"></select></div>
                 <div className="mt-[15px] grid grid-cols-3 gap-3 max-[1000px]:grid-cols-2 max-[700px]:grid-cols-1" id="productGrid"></div>
               </div></div>
               <div><div className={`${panelClass} mt-0`}>
@@ -170,9 +170,9 @@ function CashierApp() {
               <button className={buttonClass} onClick={() => window.exportSales()}>Export CSV</button>
             </div></div>
             <div className="grid grid-cols-3 gap-[18px] max-[700px]:grid-cols-1">
-              <div className="rounded-[14px] border border-gray-200 bg-white p-5 max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Sales</div><div className="mt-2 text-[26px] font-extrabold" id="reportSales">TZS 0</div></div>
-              <div className="rounded-[14px] border border-gray-200 bg-white p-5 max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Transactions</div><div className="mt-2 text-[26px] font-extrabold" id="reportCount">0</div></div>
-              <div className="rounded-[14px] border border-gray-200 bg-white p-5 max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Expenses</div><div className="mt-2 text-[26px] font-extrabold" id="reportExpenses">TZS 0</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Sales</div><div className="mt-2 text-[26px] font-extrabold" id="rSales">TZS 0</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Transactions</div><div className="mt-2 text-[26px] font-extrabold" id="rTransactions">0</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Expenses</div><div className="mt-2 text-[26px] font-extrabold" id="rExpenses">TZS 0</div></div>
             </div>
             <div className="mt-[18px] overflow-x-auto"><table className={tableClass} id="reportTable"></table></div>
           </div></section>
@@ -200,7 +200,7 @@ function CashierApp() {
         </div>
       </main>
 
-      <div className="fixed inset-0 z-20 hidden place-items-center bg-slate-900/50 p-5" id="modal"><div className="max-h-[90vh] w-full max-w-[650px] overflow-auto rounded-xl bg-white p-[22px]" id="modalContent"></div></div>
+      <div className="fixed inset-0 z-20 hidden place-items-center bg-slate-900/50 p-5" id="modal"><div className="max-h-[90vh] w-full max-w-[650px] overflow-auto rounded-xl bg-white p-[22px]" id="modalBox"></div></div>
     </div>
     <div className="hidden print:absolute print:left-0 print:top-0 print:block print:visible print:w-[80mm]" id="printArea"></div>
     </>
