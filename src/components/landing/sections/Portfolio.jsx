@@ -1,5 +1,5 @@
 import { ArrowUpRight } from 'lucide-react';
-import { imageUrl, portfolio } from '../content.js';
+import { portfolio } from '../content.js';
 
 export default function Portfolio() {
   return (
@@ -13,7 +13,7 @@ export default function Portfolio() {
         {portfolio.map((item, index) => (
           <article key={item.title}>
             <a className="relative block h-[290px] overflow-hidden bg-gray-800 no-underline max-[680px]:h-[270px]" href="#contact" aria-label={`Discuss a project like ${item.title}`}>
-              <img className="absolute inset-0 size-full object-cover transition-transform duration-500 hover:scale-[1.045]" src={imageUrl(item.image, 1100)} alt="" loading="lazy" />
+              <img className="absolute inset-0 size-full object-cover transition-transform duration-500 hover:scale-[1.045]" src={item.image} alt={item.title} loading="lazy" />
               <span className="absolute inset-0 bg-gradient-to-t from-gray-950/40 to-transparent"></span>
               <span className="absolute left-4 top-[15px] text-[17px] text-white [font-family:'Barlow_Condensed',sans-serif]">0{index + 1}</span><span className="absolute bottom-[15px] right-[15px] grid size-[31px] place-items-center bg-black text-white"><ArrowUpRight size={20} /></span>
             </a>

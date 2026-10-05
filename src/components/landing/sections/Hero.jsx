@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { imageUrl } from '../content.js';
+import { heroImage } from '../content.js';
 
 export default function Hero() {
   const reduceMotion = useReducedMotion();
@@ -20,7 +20,7 @@ export default function Hero() {
           <motion.div {...entrance(0.46)} className="mt-[47px] flex items-center gap-3 text-[9px] uppercase tracking-[.1em] text-gray-400 max-[680px]:mt-[31px] max-[680px]:text-[8px]"><span className="h-px w-[35px] bg-blue-500"></span><span>Branding / Printing / Design / Internet</span></motion.div>
         </motion.div>
         <div className="relative min-h-[400px] overflow-hidden bg-gray-300 max-[980px]:min-h-[360px] max-[680px]:min-h-[310px]" aria-label="Creative team working on a digital project">
-          <img className="absolute inset-0 size-full object-cover object-center" src={imageUrl('photo-1519389950473-47ba0277781c', 1400)} alt="Creative team collaborating around a computer" />
+          <img className="absolute inset-0 size-full object-cover object-center" src={heroImage} alt="Imoka Technology creative solutions promotional artwork" />
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950/75 via-transparent to-gray-950/10"></div>
           <div className="absolute bottom-[30px] left-[30px] flex items-center gap-3 text-white"><span className="grid size-[41px] place-items-center bg-black text-2xl font-extrabold [font-family:'Barlow_Condensed',sans-serif]">I</span><span><strong className="block text-sm">Good ideas.</strong><small className="mt-[3px] block text-[11px] text-gray-300">Made real here.</small></span></div>
           <div className="absolute right-[30px] top-[30px] text-2xl font-bold text-white [font-family:'Barlow_Condensed',sans-serif]">01 <span className="text-sm text-white/65">/ 05</span></div>

@@ -1,5 +1,5 @@
 import { ArrowUpRight } from 'lucide-react';
-import { imageUrl, products } from '../content.js';
+import { products } from '../content.js';
 
 export default function Products() {
   return (
@@ -11,7 +11,7 @@ export default function Products() {
       <div className="grid grid-cols-[1.1fr_.9fr_.9fr_1.1fr] gap-[13px] max-[980px]:grid-cols-2 max-[680px]:gap-[9px]">
         {products.map((product, index) => (
           <a className={`relative min-h-[290px] overflow-hidden bg-gray-800 no-underline max-[980px]:min-h-[270px] max-[680px]:min-h-[220px] max-[380px]:min-h-[190px] ${index % 2 ? 'min-[981px]:mt-[26px]' : ''}`} href="#contact" key={product.title}>
-            <img className="absolute inset-0 size-full object-cover transition-transform duration-500 hover:scale-[1.045]" src={imageUrl(product.image, 900)} alt={product.title} loading="lazy" />
+            <img className="absolute inset-0 size-full object-cover transition-transform duration-500 hover:scale-[1.045]" src={product.image} alt={product.title} loading="lazy" />
             <span className="absolute inset-0 bg-gradient-to-t from-gray-950/90 to-transparent"></span>
             <span className="absolute bottom-5 left-[18px] right-[45px] text-white max-[680px]:bottom-[15px] max-[680px]:left-[13px]"><small className="mb-[7px] block text-[9px] font-bold uppercase tracking-[.13em] text-blue-400 max-[680px]:text-[8px]">{product.category}</small><strong className="block text-2xl leading-none [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-xl">{product.title}</strong></span>
             <span className="absolute bottom-[17px] right-[14px] grid size-[31px] place-items-center bg-black text-white max-[680px]:bottom-[13px] max-[680px]:right-[10px] max-[680px]:size-[27px]"><ArrowUpRight size={18} /></span>
