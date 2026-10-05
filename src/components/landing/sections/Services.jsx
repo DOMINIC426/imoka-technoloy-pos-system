@@ -1,30 +1,79 @@
-import { Brush, FileText, MonitorSmartphone, Printer, Wifi } from 'lucide-react';
+import { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ArrowUpRight, Brush, FileText, MonitorSmartphone, Printer, Wifi } from 'lucide-react';
 import { services } from '../content.js';
 
 const icons = { brand: Brush, print: Printer, stationery: FileText, design: MonitorSmartphone, internet: Wifi };
 
 export default function Services() {
+  const [activeServiceIndex, setActiveServiceIndex] = useState(0);
+  const reduceMotion = useReducedMotion();
+  const activeService = services[activeServiceIndex];
+
   return (
     <section className="mx-auto w-[min(1240px,calc(100%-64px))] py-20 max-[680px]:w-[calc(100%-36px)] max-[680px]:pb-[70px] max-[680px]:pt-[67px]" id="services">
       <div className="mb-[35px] flex items-end justify-between gap-10 max-[680px]:mb-[25px] max-[680px]:block">
         <div><p className="mb-[13px] text-[11px] font-bold uppercase tracking-[.12em] text-blue-600">What we do</p><h2 className="m-0 text-[52px] font-bold uppercase leading-[.91] text-gray-900 [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">Good work, <span className="text-blue-600">all under one roof.</span></h2></div>
         <p className="mb-1 max-w-[350px] text-[13px] leading-[1.8] text-gray-600 max-[680px]:mt-4 max-[680px]:text-xs">We bring the creative thinking and practical tools your business needs to show up with confidence.</p>
       </div>
-      <div className="grid grid-cols-5 gap-3 max-[980px]:grid-cols-3 max-[680px]:grid-cols-2 max-[680px]:gap-[9px]">
-        {services.map((service, index) => {
-          const Icon = icons[service.icon];
-          return (
-            <article className="relative flex min-h-[202px] flex-col items-start border border-gray-200 border-t-[3px] border-t-blue-600 bg-white p-[19px_17px_16px] transition-transform hover:-translate-y-1 max-[680px]:min-h-[184px] max-[680px]:p-[15px_13px]" key={service.title}>
-              <div className="flex w-full items-center justify-between text-gray-900"><span className="text-sm text-gray-400 [font-family:'Barlow_Condensed',sans-serif]">0{index + 1}</span><Icon className="text-gray-900" size={24} strokeWidth={1.7} /></div>
-              <h3 className="mb-[7px] mt-7 text-[21px] font-bold leading-none text-gray-900 [font-family:'Barlow_Condensed',sans-serif] max-[680px]:mt-[25px] max-[680px]:text-[19px]">{service.title}</h3>
-              <p className="m-0 max-w-[170px] text-[11px] leading-[1.55] text-gray-600 max-[680px]:max-w-[145px] max-[680px]:text-[10px]">{service.description}</p>
-              <a className="absolute bottom-[14px] right-4 grid size-7 place-items-center bg-black text-lg leading-none text-white no-underline" href="#contact" aria-label={`Ask about ${service.title}`}><ArrowMark /></a>
-            </article>
-          );
-        })}
+      <div className="grid grid-cols-[.72fr_1.28fr] gap-5 max-[760px]:grid-cols-1">
+        <div className="grid content-start gap-2 max-[760px]:grid-cols-2 max-[420px]:gap-1.5" role="tablist" aria-label="Our services">
+          {services.map((service, index) => {
+            const Icon = icons[service.icon];
+            const selected = activeServiceIndex === index;
+            return (
+              <button
+                key={service.title}
+                id={`service-tab-${index}`}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                aria-controls="service-showcase"
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setActiveServiceIndex(index)}
+                onKeyDown={event => {
+                  let nextIndex;
+                  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % services.length;
+                  else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + services.length) % services.length;
+                  else if (event.key === 'Home') nextIndex = 0;
+                  else if (event.key === 'End') nextIndex = services.length - 1;
+                  else return;
+                  event.preventDefault();
+                  setActiveServiceIndex(nextIndex);
+                  document.getElementById(`service-tab-${nextIndex}`)?.focus();
+                }}
+                className={`flex min-h-[70px] items-center gap-3 border px-4 py-3 text-left transition-colors max-[420px]:min-h-[62px] max-[420px]:gap-2 max-[420px]:px-2.5 ${selected ? 'border-black bg-black text-white' : 'border-gray-200 bg-white text-gray-800 hover:border-gray-400'}`}
+              >
+                <Icon className="shrink-0" size={19} strokeWidth={1.8} />
+                <span className="min-w-0 flex-1"><span className="block text-sm font-semibold max-[420px]:text-xs">{service.title}</span><span className={`mt-1 block text-[10px] ${selected ? 'text-gray-300' : 'text-gray-500'}`}>{service.description}</span></span>
+                <span className="text-xs opacity-60">0{index + 1}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div id="service-showcase" className="relative min-h-[390px] overflow-hidden bg-gray-900 max-[760px]:min-h-[340px] max-[420px]:min-h-[380px]" role="tabpanel" aria-labelledby={`service-tab-${activeServiceIndex}`}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeService.title}
+              className="absolute inset-0"
+              initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+              transition={{ duration: reduceMotion ? 0 : 0.28, ease: 'easeOut' }}
+            >
+              <img className="absolute inset-0 size-full object-cover" src={activeService.image} alt={`${activeService.title} by Imoka Technology`} />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-gray-950/20 to-gray-950/10" />
+              <div className="absolute left-6 top-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-white/80"><span className="h-px w-6 bg-blue-400" /> Imoka services <span className="text-blue-300">/ 0{activeServiceIndex + 1}</span></div>
+              <div className="absolute bottom-0 left-0 right-0 p-7 text-white max-[420px]:p-5">
+                <h3 className="mb-2 text-4xl font-bold leading-none [font-family:'Barlow_Condensed',sans-serif] max-[420px]:text-3xl">{activeService.title}</h3>
+                <p className="mb-5 max-w-md text-sm leading-6 text-white/80">{activeService.description}</p>
+                <a className="inline-flex min-h-11 items-center gap-3 bg-black px-4 text-xs font-bold uppercase text-white no-underline transition-transform hover:-translate-y-0.5" href="#contact">Request a quote <ArrowUpRight size={16} /></a>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </section>
   );
 }
-
-function ArrowMark() { return <span aria-hidden="true">↗</span>; }
