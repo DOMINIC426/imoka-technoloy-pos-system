@@ -5,11 +5,13 @@ import Navbar from './sections/Navbar.jsx';
 import Portfolio from './sections/Portfolio.jsx';
 import Products from './sections/Products.jsx';
 import Services from './sections/Services.jsx';
+import ScrollProgress from './ScrollProgress.jsx';
 import ScrollReveal from './ScrollReveal.jsx';
 
 export default function LandingPage() {
   return (
     <div className="overflow-hidden bg-gray-50 font-sans text-gray-900">
+      <ScrollProgress />
       <Navbar />
       <main>
         <Hero />
