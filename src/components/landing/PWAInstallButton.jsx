@@ -4,14 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PWAInstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showButton, setShowButton] = useState(false);
+  const [showButton, setShowButton] = useState(true); // Show permanently for now
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowButton(true);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -22,7 +21,10 @@ export default function PWAInstallButton() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert('PWA installation requires proper configuration (service worker + manifest). Contact your developer to set this up.');
+      return;
+    }
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -45,7 +47,7 @@ export default function PWAInstallButton() {
     }
   }, []);
 
-  if (!showButton || !deferredPrompt) return null;
+  if (!showButton) return null;
 
   return (
     <>
