@@ -1,0 +1,15 @@
+# robots.txt for Imoka Technology POS System
+# Website: https://imoka-technoloy-pos-system.vercel.app/
+
+User-agent: *
+Allow: /
+
+# Site Information
+# This site was created by Dominic Nazareth Mwaituka
+# Creator: Software Engineering Student at UDOM (University of Dodoma)
+# Owner: Imoka Technology
+# Location: Mbeya, Kiwira, Tandale, Tanzania
+# Business: Creative branding, printing, design and internet services
+
+# Sitemap
+Sitemap: https://imoka-technoloy-pos-system.vercel.app/sitemap.xml
