@@ -61,7 +61,7 @@ export default function LoginPage() {
       </section>
 
       <section className="flex min-h-screen flex-col px-6 py-7 sm:px-12 lg:px-16 xl:px-24">
-        <a className="inline-flex w-fit items-center gap-2 text-sm font-medium text-gray-600 no-underline transition-colors hover:text-[#174e46] lg:hidden" href="#home"><ArrowLeft size={17} /> Back to website</a>
+        <a className="inline-flex w-fit items-center gap-2 text-sm font-medium text-gray-600 no-underline transition-colors hover:text-[#174e46]" href="#home"><ArrowLeft size={17} /> Back to website</a>
         <div className="mx-auto my-auto w-full max-w-[430px] py-12">
           <a className="mb-12 hidden w-fit items-center gap-3 text-gray-900 no-underline lg:inline-flex" href="#home">
             <span className="grid size-10 place-items-center rounded-md bg-[#174e46] text-lg font-bold text-white">I</span>
