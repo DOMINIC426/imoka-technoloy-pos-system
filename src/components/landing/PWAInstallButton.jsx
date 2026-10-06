@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function PWAInstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showBanner, setShowBanner] = useState(false);
+  const [showButton, setShowButton] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowBanner(true);
+      setShowButton(true);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -28,60 +29,68 @@ export default function PWAInstallButton() {
 
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
-      setShowBanner(false);
+      setShowButton(false);
     }
   };
 
   const handleDismiss = () => {
-    setShowBanner(false);
+    setShowButton(false);
     localStorage.setItem('pwa-install-dismissed', 'true');
   };
 
   useEffect(() => {
     const dismissed = localStorage.getItem('pwa-install-dismissed');
     if (dismissed === 'true') {
-      setShowBanner(false);
+      setShowButton(false);
     }
   }, []);
 
-  if (!showBanner || !deferredPrompt) return null;
+  if (!showButton || !deferredPrompt) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -100, opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-      >
-        <div className="mx-auto flex items-center justify-between px-4 py-3 max-w-[1240px]">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-white/20">
-              <Download size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Install Our App</p>
-              <p className="text-xs text-white/80">Get the best experience - install Imoka Technology</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleInstall}
-              className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-blue-600 transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              Install Now
-            </button>
-            <button
-              onClick={handleDismiss}
-              className="grid size-8 place-items-center rounded-lg bg-white/20 transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              aria-label="Dismiss"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+    <>
+      <AnimatePresence>
+        {showTooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="fixed bottom-24 right-8 z-50 max-w-[200px] rounded-lg bg-gray-900 px-4 py-3 text-white shadow-xl"
+          >
+            <p className="text-sm font-semibold">Install Our App</p>
+            <p className="text-xs text-gray-300">Get the best experience!</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        <motion.button
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          exit={{ scale: 0, rotate: 180 }}
+          transition={{ type: 'spring', duration: 0.5 }}
+          onClick={handleInstall}
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          className="fixed bottom-24 right-8 z-50 grid size-14 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg transition-transform hover:scale-110 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+          aria-label="Install app"
+        >
+          <Download size={24} />
+        </motion.button>
+      </AnimatePresence>
+      <AnimatePresence>
+        {showButton && (
+          <motion.button
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            onClick={handleDismiss}
+            className="fixed bottom-24 right-24 z-50 grid size-6 place-items-center rounded-full bg-gray-700 text-white shadow-md transition-colors hover:bg-gray-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500"
+            aria-label="Dismiss install button"
+          >
+            <X size={12} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
