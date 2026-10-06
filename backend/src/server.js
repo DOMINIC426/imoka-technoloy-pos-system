@@ -586,8 +586,16 @@ async function handle(request, response) {
     }
 
     if (request.method === 'GET' && url.pathname === '/api/admin/products') {
-      const products = await prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
-      send(response, 200, { products: products.map(product => ({ ...product, price: Number(product.price) })) });
+      const search = (url.searchParams.get('search') || '').trim();
+      const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
+      const limit = Math.min(100, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '10', 10) || 10));
+      const searchableFields = ['name', 'category'].map(field => ({ [field]: { contains: search, mode: 'insensitive' } }));
+      const where = { active: true, ...(search ? { OR: searchableFields } : {}) };
+      const [total, records] = await Promise.all([
+        prisma.product.count({ where }),
+        prisma.product.findMany({ where, orderBy: { name: 'asc' }, skip: (page - 1) * limit, take: limit })
+      ]);
+      send(response, 200, { products: records.map(product => ({ ...product, price: Number(product.price) })), page, pageCount: Math.max(1, Math.ceil(total / limit)), total });
       return;
     }
 
@@ -619,15 +627,29 @@ async function handle(request, response) {
     }
 
     if (request.method === 'GET' && url.pathname === '/api/admin/shifts') {
-      const shifts = await prisma.shift.findMany({ include: { user: true, sales: { select: { total: true } } }, orderBy: { openedAt: 'desc' } });
-      send(response, 200, { shifts: shifts.map(shift => ({ id: shift.id, userId: shift.userId, userName: `${shift.user.firstName} ${shift.user.lastName}`, openedAt: shift.openedAt, closedAt: shift.closedAt, collected: shift.sales.reduce((sum, sale) => sum + Number(sale.total), 0) })) });
+      const search = (url.searchParams.get('search') || '').trim();
+      const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
+      const limit = Math.min(100, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '10', 10) || 10));
+      const where = search ? { user: { OR: [{ firstName: { contains: search, mode: 'insensitive' } }, { lastName: { contains: search, mode: 'insensitive' } }] } } : {};
+      const [total, records] = await Promise.all([
+        prisma.shift.count({ where }),
+        prisma.shift.findMany({ where, include: { user: true, sales: { select: { total: true } } }, orderBy: { openedAt: 'desc' }, skip: (page - 1) * limit, take: limit })
+      ]);
+      send(response, 200, { shifts: records.map(shift => ({ id: shift.id, userId: shift.userId, userName: `${shift.user.firstName} ${shift.user.lastName}`, openedAt: shift.openedAt, closedAt: shift.closedAt, collected: shift.sales.reduce((sum, sale) => sum + Number(sale.total), 0) })), page, pageCount: Math.max(1, Math.ceil(total / limit)), total });
       return;
     }
 
     if (request.method === 'GET' && url.pathname === '/api/admin/audit') {
-      const limit = Math.min(200, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '100', 10) || 100));
-      const events = await prisma.auditEvent.findMany({ take: limit, orderBy: { createdAt: 'desc' } });
-      send(response, 200, { events });
+      const search = (url.searchParams.get('search') || '').trim();
+      const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
+      const limit = Math.min(100, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '10', 10) || 10));
+      const searchableFields = ['actorName', 'action', 'entity'].map(field => ({ [field]: { contains: search, mode: 'insensitive' } }));
+      const where = search ? { OR: searchableFields } : {};
+      const [total, records] = await Promise.all([
+        prisma.auditEvent.count({ where }),
+        prisma.auditEvent.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * limit, take: limit })
+      ]);
+      send(response, 200, { events: records, page, pageCount: Math.max(1, Math.ceil(total / limit)), total });
       return;
     }
 

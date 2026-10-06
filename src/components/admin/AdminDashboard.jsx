@@ -44,10 +44,16 @@ export default function AdminDashboard({ token, user, onSignOut }) {
   const [navSearch, setNavSearch] = useState('');
   const [summary, setSummary] = useState(null);
   const [users, setUsers] = useState({ users: [], page: 1, pageCount: 1, total: 0 });
-  const [shifts, setShifts] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [shifts, setShifts] = useState({ shifts: [], page: 1, pageCount: 1, total: 0 });
+  const [products, setProducts] = useState({ products: [], page: 1, pageCount: 1, total: 0 });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsSearch, setProductsSearch] = useState('');
+  const [shiftsPage, setShiftsPage] = useState(1);
+  const [shiftsSearch, setShiftsSearch] = useState('');
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditSearch, setAuditSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showUserForm, setShowUserForm] = useState(false);
@@ -86,14 +92,17 @@ export default function AdminDashboard({ token, user, onSignOut }) {
           const data = await request(`/admin/users?${params}`, token);
           if (!cancelled) setUsers(data);
         } else if (activePage === 'shifts') {
-          const data = await request('/admin/shifts', token);
-          if (!cancelled) setShifts(data.shifts);
+          const params = new URLSearchParams({ page: String(shiftsPage), search: shiftsSearch, limit: '10' });
+          const data = await request(`/admin/shifts?${params}`, token);
+          if (!cancelled) setShifts(data);
         } else if (activePage === 'audit') {
-          const data = await request('/admin/audit?limit=100', token);
-          if (!cancelled) setAuditEvents(data.events);
+          const params = new URLSearchParams({ page: String(auditPage), search: auditSearch, limit: '10' });
+          const data = await request(`/admin/audit?${params}`, token);
+          if (!cancelled) setAuditEvents(data);
         } else {
-          const data = await request('/admin/products', token);
-          if (!cancelled) setProducts(data.products);
+          const params = new URLSearchParams({ page: String(productsPage), search: productsSearch, limit: '10' });
+          const data = await request(`/admin/products?${params}`, token);
+          if (!cancelled) setProducts(data);
         }
       } catch (loadError) {
         if (!cancelled) setError(loadError.message);
@@ -103,7 +112,7 @@ export default function AdminDashboard({ token, user, onSignOut }) {
     };
     load();
     return () => { cancelled = true; };
-  }, [activePage, page, search, token]);
+  }, [activePage, page, search, productsPage, productsSearch, shiftsPage, shiftsSearch, auditPage, auditSearch, token]);
 
   function openUserForm() {
     setCreatedUser(null);
@@ -165,7 +174,13 @@ export default function AdminDashboard({ token, user, onSignOut }) {
     try {
       const path = editingProduct ? `/admin/products/${encodeURIComponent(editingProduct.id)}` : '/admin/products';
       const result = await request(path, token, { method: editingProduct ? 'PUT' : 'POST', body: JSON.stringify(product) });
-      setProducts(current => editingProduct ? current.map(item => item.id === result.product.id ? result.product : item) : [...current, result.product]);
+      if (editingProduct) {
+        setProducts(current => ({ ...current, products: current.products.map(item => item.id === result.product.id ? result.product : item) }));
+      } else {
+        setProductsPage(1);
+        setProductsSearch('');
+        setProducts(current => ({ ...current, products: [result.product, ...current.products], total: current.total + 1 }));
+      }
       setShowProductForm(false);
       setEditingProduct(null);
     } catch (saveError) {
@@ -288,22 +303,28 @@ export default function AdminDashboard({ token, user, onSignOut }) {
 
           {activePage === 'shifts' && (
             <>
-              <div className="mb-6"><p className="text-sm text-gray-500">Opening, closing and collected totals.</p><h2 className="mt-1 text-2xl font-semibold">Stationery shifts</h2></div>
-              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm"><table className="w-full min-w-[720px] border-collapse text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">Cashier</th><th className="px-4 py-3 font-semibold">Opened</th><th className="px-4 py-3 font-semibold">Closed</th><th className="px-4 py-3 font-semibold">Collected</th><th className="px-4 py-3 font-semibold">Status</th></tr></thead><tbody>{shifts.map(shift => <tr className="border-t border-gray-100" key={shift.id}><td className="px-4 py-3.5 font-medium">{shift.userName}</td><td className="px-4 py-3.5 text-gray-600">{dateTime(shift.openedAt)}</td><td className="px-4 py-3.5 text-gray-600">{dateTime(shift.closedAt)}</td><td className="px-4 py-3.5 font-semibold">{money(shift.collected)}</td><td className="px-4 py-3.5"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-semibold ${shift.closedAt ? 'bg-gray-100 text-gray-600' : 'bg-violet-50 text-violet-700'}`}>{shift.closedAt ? 'Closed' : 'Open'}</span></td></tr>)}{!shifts.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No shifts recorded yet.</td></tr>}</tbody></table></div>
+              <div className="mb-6"><p className="text-sm text-gray-500">Opening, closing and collected totals.</p><h2 className="mt-1 text-2xl font-semibold">Stationery shifts <span className="ml-1 text-base font-normal text-gray-500">({shifts.total})</span></h2></div>
+              <label className="mb-4 flex h-11 max-w-[440px] items-center gap-3 rounded-md border border-gray-200 bg-white px-3.5 focus-within:border-violet-400"><Search size={17} className="text-gray-500" /><input className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none" value={shiftsSearch} onChange={event => { setShiftsSearch(event.target.value); setShiftsPage(1); }} placeholder="Search cashier name" aria-label="Search shifts" /></label>
+              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm"><table className="w-full min-w-[720px] border-collapse text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">Cashier</th><th className="px-4 py-3 font-semibold">Opened</th><th className="px-4 py-3 font-semibold">Closed</th><th className="px-4 py-3 font-semibold">Collected</th><th className="px-4 py-3 font-semibold">Status</th></tr></thead><tbody>{shifts.shifts.map(shift => <tr className="border-t border-gray-100" key={shift.id}><td className="px-4 py-3.5 font-medium">{shift.userName}</td><td className="px-4 py-3.5 text-gray-600">{dateTime(shift.openedAt)}</td><td className="px-4 py-3.5 text-gray-600">{dateTime(shift.closedAt)}</td><td className="px-4 py-3.5 font-semibold">{money(shift.collected)}</td><td className="px-4 py-3.5"><span className={`inline-flex rounded px-2.5 py-1 text-xs font-semibold ${shift.closedAt ? 'bg-gray-100 text-gray-600' : 'bg-violet-50 text-violet-700'}`}>{shift.closedAt ? 'Closed' : 'Open'}</span></td></tr>)}{!shifts.shifts.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No shifts recorded yet.</td></tr>}</tbody></table></div>
+              <div className="mt-4 flex items-center justify-between gap-3 text-sm text-gray-600 max-[420px]:flex-col max-[420px]:items-stretch"><span>Page {shifts.page} of {shifts.pageCount}</span><div className="flex justify-between gap-2"><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={shifts.page <= 1 || loading} onClick={() => setShiftsPage(current => Math.max(1, current - 1))}><ArrowLeft size={15} /> Previous</button><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={shifts.page >= shifts.pageCount || loading} onClick={() => setShiftsPage(current => current + 1)}>Next <ArrowRight size={15} /></button></div></div>
             </>
           )}
 
           {activePage === 'products' && (
             <>
-              <div className="mb-6 flex items-end justify-between gap-4 max-[600px]:items-stretch max-[600px]:flex-col"><div><p className="text-sm text-gray-500">Shared catalog used by the cashier POS.</p><h2 className="mt-1 text-2xl font-semibold">Products <span className="ml-1 text-base font-normal text-gray-500">({products.length})</span></h2></div><button type="button" onClick={() => openProductForm()} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-700"><Plus size={17} /> Add product</button></div>
-              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">Product</th><th className="px-4 py-3 font-semibold">Category</th><th className="px-4 py-3 font-semibold">Price</th><th className="px-4 py-3 font-semibold">Stock</th><th className="px-4 py-3 font-semibold">Actions</th></tr></thead><tbody>{products.map(product => <tr className="border-t border-gray-100 hover:bg-gray-50" key={product.id}><td className="px-4 py-3.5 font-medium">{product.name}<small className="mt-0.5 block text-xs text-gray-500">{product.id}</small></td><td className="px-4 py-3.5 text-gray-600">{product.category}</td><td className="px-4 py-3.5">{money(product.price)}</td><td className="px-4 py-3.5">{product.stockTracked === false ? <span className="text-gray-500">Not tracked</span> : <span className={product.stock <= 5 ? 'font-semibold text-amber-700' : 'text-gray-700'}>{product.stock}</span>}</td><td className="px-4 py-3.5"><div className="flex gap-2"><button type="button" title={`Edit ${product.name}`} aria-label={`Edit ${product.name}`} onClick={() => openProductForm(product)} className="grid size-9 place-items-center rounded-md border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"><Pencil size={16} /></button><button type="button" title={`Delete ${product.name}`} aria-label={`Delete ${product.name}`} onClick={() => deleteProduct(product)} className="grid size-9 place-items-center rounded-md border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"><Trash2 size={16} /></button></div></td></tr>)}{!products.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No products in the catalog.</td></tr>}</tbody></table></div>
+              <div className="mb-6 flex items-end justify-between gap-4 max-[600px]:items-stretch max-[600px]:flex-col"><div><p className="text-sm text-gray-500">Shared catalog used by the cashier POS.</p><h2 className="mt-1 text-2xl font-semibold">Products <span className="ml-1 text-base font-normal text-gray-500">({products.total})</span></h2></div><button type="button" onClick={() => openProductForm()} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-700"><Plus size={17} /> Add product</button></div>
+              <label className="mb-4 flex h-11 max-w-[440px] items-center gap-3 rounded-md border border-gray-200 bg-white px-3.5 focus-within:border-violet-400"><Search size={17} className="text-gray-500" /><input className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none" value={productsSearch} onChange={event => { setProductsSearch(event.target.value); setProductsPage(1); }} placeholder="Search product name or category" aria-label="Search products" /></label>
+              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">Product</th><th className="px-4 py-3 font-semibold">Category</th><th className="px-4 py-3 font-semibold">Price</th><th className="px-4 py-3 font-semibold">Stock</th><th className="px-4 py-3 font-semibold">Actions</th></tr></thead><tbody>{products.products.map(product => <tr className="border-t border-gray-100 hover:bg-gray-50" key={product.id}><td className="px-4 py-3.5 font-medium">{product.name}<small className="mt-0.5 block text-xs text-gray-500">{product.id}</small></td><td className="px-4 py-3.5 text-gray-600">{product.category}</td><td className="px-4 py-3.5">{money(product.price)}</td><td className="px-4 py-3.5">{product.stockTracked === false ? <span className="text-gray-500">Not tracked</span> : <span className={product.stock <= 5 ? 'font-semibold text-amber-700' : 'text-gray-700'}>{product.stock}</span>}</td><td className="px-4 py-3.5"><div className="flex gap-2"><button type="button" title={`Edit ${product.name}`} aria-label={`Edit ${product.name}`} onClick={() => openProductForm(product)} className="grid size-9 place-items-center rounded-md border border-violet-200 bg-violet-50 text-violet-700 transition-colors hover:bg-violet-100"><Pencil size={16} /></button><button type="button" title={`Delete ${product.name}`} aria-label={`Delete ${product.name}`} onClick={() => deleteProduct(product)} className="grid size-9 place-items-center rounded-md border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"><Trash2 size={16} /></button></div></td></tr>)}{!products.products.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No products in the catalog.</td></tr>}</tbody></table></div>
+              <div className="mt-4 flex items-center justify-between gap-3 text-sm text-gray-600 max-[420px]:flex-col max-[420px]:items-stretch"><span>Page {products.page} of {products.pageCount}</span><div className="flex justify-between gap-2"><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={products.page <= 1 || loading} onClick={() => setProductsPage(current => Math.max(1, current - 1))}><ArrowLeft size={15} /> Previous</button><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={products.page >= products.pageCount || loading} onClick={() => setProductsPage(current => current + 1)}>Next <ArrowRight size={15} /></button></div></div>
             </>
           )}
 
           {activePage === 'audit' && (
             <>
-              <div className="mb-6"><p className="text-sm text-gray-500">Read-only history of important account and business actions.</p><h2 className="mt-1 text-2xl font-semibold">Audit log</h2></div>
-              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">When</th><th className="px-4 py-3 font-semibold">Actor</th><th className="px-4 py-3 font-semibold">Action</th><th className="px-4 py-3 font-semibold">Record</th><th className="px-4 py-3 font-semibold">Details</th></tr></thead><tbody>{auditEvents.map(event => <tr className="border-t border-gray-100" key={event.id}><td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{dateTime(event.createdAt)}</td><td className="px-4 py-3.5 font-medium">{event.actorName}</td><td className="px-4 py-3.5">{event.action}</td><td className="px-4 py-3.5 text-gray-600">{event.entity}{event.entityId ? ` · ${event.entityId}` : ''}</td><td className="px-4 py-3.5 text-gray-600">{Object.values(event.details || {}).join(' · ') || '—'}</td></tr>)}{!auditEvents.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No audit events recorded.</td></tr>}</tbody></table></div>
+              <div className="mb-6"><p className="text-sm text-gray-500">Read-only history of important account and business actions.</p><h2 className="mt-1 text-2xl font-semibold">Audit log <span className="ml-1 text-base font-normal text-gray-500">({auditEvents.total})</span></h2></div>
+              <label className="mb-4 flex h-11 max-w-[440px] items-center gap-3 rounded-md border border-gray-200 bg-white px-3.5 focus-within:border-violet-400"><Search size={17} className="text-gray-500" /><input className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none" value={auditSearch} onChange={event => { setAuditSearch(event.target.value); setAuditPage(1); }} placeholder="Search actor, action or entity" aria-label="Search audit log" /></label>
+              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">When</th><th className="px-4 py-3 font-semibold">Actor</th><th className="px-4 py-3 font-semibold">Action</th><th className="px-4 py-3 font-semibold">Record</th><th className="px-4 py-3 font-semibold">Details</th></tr></thead><tbody>{auditEvents.events?.map(event => <tr className="border-t border-gray-100" key={event.id}><td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{dateTime(event.createdAt)}</td><td className="px-4 py-3.5 font-medium">{event.actorName}</td><td className="px-4 py-3.5">{event.action}</td><td className="px-4 py-3.5 text-gray-600">{event.entity}{event.entityId ? ` · ${event.entityId}` : ''}</td><td className="px-4 py-3.5 text-gray-600">{Object.values(event.details || {}).join(' · ') || '—'}</td></tr>)}{!auditEvents.events?.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="5">No audit events recorded.</td></tr>}</tbody></table></div>
+              <div className="mt-4 flex items-center justify-between gap-3 text-sm text-gray-600 max-[420px]:flex-col max-[420px]:items-stretch"><span>Page {auditEvents.page} of {auditEvents.pageCount}</span><div className="flex justify-between gap-2"><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={auditEvents.page <= 1 || loading} onClick={() => setAuditPage(current => Math.max(1, current - 1))}><ArrowLeft size={15} /> Previous</button><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={auditEvents.page >= auditEvents.pageCount || loading} onClick={() => setAuditPage(current => current + 1)}>Next <ArrowRight size={15} /></button></div></div>
             </>
           )}
 
