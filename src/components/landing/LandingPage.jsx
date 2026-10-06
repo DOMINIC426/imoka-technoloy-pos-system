@@ -7,6 +7,7 @@ import Products from './sections/Products.jsx';
 import Services from './sections/Services.jsx';
 import ScrollProgress from './ScrollProgress.jsx';
 import ScrollReveal from './ScrollReveal.jsx';
+import Counter from './Counter.jsx';
 import { LanguageProvider } from './language.js';
 
 export default function LandingPage() {
@@ -17,6 +18,7 @@ export default function LandingPage() {
         <Navbar />
         <main>
           <Hero />
+          <Counter />
           <ScrollReveal><Services /></ScrollReveal>
           <ScrollReveal delay={0.04}><Products /></ScrollReveal>
           <ScrollReveal delay={0.04}><Portfolio /></ScrollReveal>

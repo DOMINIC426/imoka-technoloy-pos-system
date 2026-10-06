@@ -3,6 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { portfolio } from '../content.js';
 import { useLanguage } from '../language.js';
 import DetailModal from '../DetailModal.jsx';
+import TextReveal from '../TextReveal.jsx';
 
 export default function Portfolio() {
   const { copy } = useLanguage();
@@ -11,7 +12,7 @@ export default function Portfolio() {
     <section className="bg-gray-900 px-8 py-[89px] pb-[100px] text-white max-[680px]:px-[18px] max-[680px]:py-[69px] max-[680px]:pb-[76px]" id="portfolio">
       <div className="mx-auto max-w-[1240px]">
       <div className="mb-[35px] flex items-end justify-between gap-10 max-[680px]:mb-[25px] max-[680px]:block">
-        <div><p className="mb-5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400">{copy.portfolio.eyebrow}</p><h2 className="m-0 text-[52px] font-bold uppercase leading-[.91] text-white [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">{copy.portfolio.title}<br /><span className="text-blue-400">{copy.portfolio.titleAccent}</span></h2></div>
+        <div><p className="mb-5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400">{copy.portfolio.eyebrow}</p><TextReveal className="m-0 text-[52px] font-bold uppercase leading-[.91] text-white [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">{copy.portfolio.title}<br /><span className="text-blue-400">{copy.portfolio.titleAccent}</span></TextReveal></div>
         <p className="mb-1 max-w-[350px] text-[13px] leading-[1.8] text-gray-300 max-[680px]:mt-4 max-[680px]:text-xs">{copy.portfolio.intro}</p>
       </div>
       <div className="grid grid-cols-3 gap-[19px] max-[680px]:grid-cols-1 max-[680px]:gap-[29px]">
