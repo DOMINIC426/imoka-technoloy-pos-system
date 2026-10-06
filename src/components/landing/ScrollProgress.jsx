@@ -10,7 +10,7 @@ export default function ScrollProgress() {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = scrollableHeight > 0 ? Math.min(window.scrollY / scrollableHeight, 1) : 0;
+        const progress = scrollableHeight > 0 ? Math.min(Math.max(window.scrollY / scrollableHeight, 0), 1) : 0;
         const progressBar = progressRef.current;
 
         if (progressBar) {
@@ -32,8 +32,8 @@ export default function ScrollProgress() {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-1 bg-transparent" role="progressbar" aria-label="Page reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-      <div ref={progressRef} className="h-full origin-left scale-x-0 bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-1 bg-gray-900/20" role="progressbar" aria-label="Page reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div ref={progressRef} className="h-full origin-left scale-x-0 bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.75)]" />
     </div>
   );
 }
