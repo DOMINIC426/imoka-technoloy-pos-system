@@ -5,6 +5,7 @@ import { useLanguage } from '../language.js';
 import { useState, useEffect, useRef } from 'react';
 import GradientText from '../GradientText.jsx';
 import Skeleton from '../Skeleton.jsx';
+import ParticleBackground from '../ParticleBackground.jsx';
 
 function MagneticButton({ children, className, as = 'button', ...props }) {
   const ref = useRef(null);
@@ -82,6 +83,7 @@ export default function Hero() {
   const entrance = (delay = 0) => reduceMotion ? {} : { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.62, delay, ease: [0.22, 1, 0.36, 1] } };
   return (
     <section className="isolate relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-slate-800 text-white" id="home">
+      <ParticleBackground />
       <motion.div 
         className="absolute inset-0 opacity-30"
         animate={{
