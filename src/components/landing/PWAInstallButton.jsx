@@ -19,7 +19,7 @@ export default function PWAInstallButton({ className = '' }) {
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      alert('PWA installation requires proper configuration (service worker + manifest). Contact your developer to set this up.');
+      // PWA not configured, do nothing silently
       return;
     }
 
