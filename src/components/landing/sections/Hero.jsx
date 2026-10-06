@@ -4,7 +4,7 @@ import { heroImage } from '../content.js';
 import { useLanguage } from '../language.js';
 import { useState, useEffect, useRef } from 'react';
 
-function MagneticButton({ children, className, ...props }) {
+function MagneticButton({ children, className, as = 'button', ...props }) {
   const ref = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
@@ -20,8 +20,10 @@ function MagneticButton({ children, className, ...props }) {
     setPosition({ x: 0, y: 0 });
   };
 
+  const MotionComponent = motion[as];
+
   return (
-    <motion.button
+    <MotionComponent
       ref={ref}
       className={className}
       animate={{ x: position.x, y: position.y }}
@@ -31,7 +33,7 @@ function MagneticButton({ children, className, ...props }) {
       {...props}
     >
       {children}
-    </motion.button>
+    </MotionComponent>
   );
 }
 
