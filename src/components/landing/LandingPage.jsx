@@ -9,6 +9,7 @@ import ScrollProgress from './ScrollProgress.jsx';
 import ScrollReveal from './ScrollReveal.jsx';
 import Counter from './Counter.jsx';
 import MouseTrail from './MouseTrail.jsx';
+import BackToTop from './BackToTop.jsx';
 import { LanguageProvider } from './language.js';
 
 export default function LandingPage() {
@@ -27,6 +28,7 @@ export default function LandingPage() {
           <ScrollReveal delay={0.04}><Contact /></ScrollReveal>
         </main>
         <Footer />
+        <BackToTop />
       </div>
     </LanguageProvider>
   );

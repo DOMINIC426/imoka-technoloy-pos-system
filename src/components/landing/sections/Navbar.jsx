@@ -15,7 +15,7 @@ export default function Navbar() {
   const { copy } = useLanguage();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-gray-900 text-white">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-gray-900/80 backdrop-blur-md text-white">
       <nav className="mx-auto flex h-[78px] w-[min(1240px,calc(100%-64px))] items-center justify-between max-[680px]:h-[68px] max-[680px]:w-[calc(100%-36px)]" aria-label={copy.nav.main}>
         <a className="inline-flex items-center gap-2.5 text-white no-underline" href="#home" aria-label="Imoka Technology home">
           <span className="grid size-[39px] place-items-center rounded-lg bg-blue-600 font-bold text-white [font-family:'Barlow_Condensed',sans-serif]" aria-hidden="true"><span className="-rotate-8">I</span></span>

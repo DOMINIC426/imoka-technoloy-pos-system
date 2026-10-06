@@ -4,6 +4,8 @@ import { ArrowUpRight, Brush, FileText, MonitorSmartphone, Printer, Wifi } from 
 import { services } from '../content.js';
 import { useLanguage } from '../language.js';
 import TextReveal from '../TextReveal.jsx';
+import TiltCard from '../TiltCard.jsx';
+import GradientText from '../GradientText.jsx';
 
 const icons = { brand: Brush, print: Printer, stationery: FileText, design: MonitorSmartphone, internet: Wifi };
 
@@ -16,7 +18,7 @@ export default function Services() {
   return (
     <section className="mx-auto w-[min(1240px,calc(100%-64px))] py-20 max-[680px]:w-[calc(100%-36px)] max-[680px]:pb-[70px] max-[680px]:pt-[67px]" id="services">
       <div className="mb-[35px] flex items-end justify-between gap-10 max-[680px]:mb-[25px] max-[680px]:block">
-        <div><p className="mb-[13px] text-[11px] font-bold uppercase tracking-[.12em] text-blue-600">{copy.services.eyebrow}</p><TextReveal className="m-0 text-[52px] font-bold uppercase leading-[.91] text-gray-900 [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">{copy.services.title} <span className="text-blue-600">{copy.services.titleAccent}</span></TextReveal></div>
+        <div><p className="mb-[13px] text-[11px] font-bold uppercase tracking-[.12em] text-blue-600">{copy.services.eyebrow}</p><TextReveal className="m-0 text-[52px] font-bold uppercase leading-[.91] [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">{copy.services.title} <GradientText className="text-blue-600">{copy.services.titleAccent}</GradientText></TextReveal></div>
         <p className="mb-1 max-w-[350px] text-[13px] leading-[1.8] text-gray-600 max-[680px]:mt-4 max-[680px]:text-xs">{copy.services.intro}</p>
       </div>
       <div className="grid grid-cols-[.72fr_1.28fr] gap-5 max-[760px]:grid-cols-1">
@@ -55,7 +57,7 @@ export default function Services() {
           })}
         </div>
 
-        <div id="service-showcase" className="relative min-h-[390px] overflow-hidden bg-gray-900 max-[760px]:min-h-[340px] max-[420px]:min-h-[380px]" role="tabpanel" aria-labelledby={`service-tab-${activeServiceIndex}`}>
+        <TiltCard id="service-showcase" className="relative min-h-[390px] overflow-hidden bg-gray-900 max-[760px]:min-h-[340px] max-[420px]:min-h-[380px]" role="tabpanel" aria-labelledby={`service-tab-${activeServiceIndex}`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeService.title}
@@ -75,7 +77,7 @@ export default function Services() {
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </TiltCard>
       </div>
     </section>
   );

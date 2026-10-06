@@ -4,6 +4,7 @@ import { products } from '../content.js';
 import { useLanguage } from '../language.js';
 import DetailModal from '../DetailModal.jsx';
 import TextReveal from '../TextReveal.jsx';
+import GradientText from '../GradientText.jsx';
 
 export default function Products() {
   const { copy } = useLanguage();
@@ -11,7 +12,7 @@ export default function Products() {
   return (
     <section className="mx-auto w-[min(1240px,calc(100%-64px))] border-t border-gray-200 py-[77px] pb-[100px] max-[680px]:w-[calc(100%-36px)] max-[680px]:py-[68px] max-[680px]:pb-[75px]" id="products">
       <div className="mb-[31px] flex items-end justify-between gap-10 max-[680px]:mb-[25px] max-[680px]:block max-[380px]:block">
-        <div><p className="mb-[13px] text-[11px] font-bold uppercase tracking-[.12em] text-blue-600">{copy.products.eyebrow}</p><TextReveal className="m-0 text-[55px] font-bold uppercase leading-[.91] text-gray-900 [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">{copy.products.title}<br /><span className="text-blue-600">{copy.products.titleAccent}</span></TextReveal></div>
+        <div><p className="mb-[13px] text-[11px] font-bold uppercase tracking-[.12em] text-blue-600">{copy.products.eyebrow}</p><TextReveal className="m-0 text-[55px] font-bold uppercase leading-[.91] text-gray-900 [font-family:'Barlow_Condensed',sans-serif] max-[680px]:text-[43px]">{copy.products.title}<br /><GradientText className="text-blue-600">{copy.products.titleAccent}</GradientText></TextReveal></div>
         <a className="mb-[7px] inline-flex items-center gap-2 text-xs font-semibold text-gray-900 no-underline max-[680px]:mt-4 max-[680px]:max-w-[130px] max-[680px]:text-[10px] max-[380px]:max-w-none" href="#contact">{copy.products.cta} <ArrowUpRight size={16} /></a>
       </div>
       <div className="grid grid-cols-[1.1fr_.9fr_.9fr_1.1fr] gap-[13px] max-[980px]:grid-cols-2 max-[680px]:gap-[9px]">
