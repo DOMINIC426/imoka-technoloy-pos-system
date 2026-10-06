@@ -76,7 +76,23 @@ export default function Hero() {
 
   const entrance = (delay = 0) => reduceMotion ? {} : { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.62, delay, ease: [0.22, 1, 0.36, 1] } };
   return (
-    <section className="isolate bg-gradient-to-br from-gray-950 via-gray-900 to-slate-800 text-white" id="home">
+    <section className="isolate relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-slate-800 text-white" id="home">
+      <motion.div 
+        className="absolute inset-0 opacity-30"
+        animate={{
+          backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          repeatType: 'loop',
+          ease: 'linear',
+        }}
+        style={{
+          background: 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%), radial-gradient(circle at 0% 0%, rgba(147, 51, 234, 0.2) 0%, transparent 50%), radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.2) 0%, transparent 50%)',
+          backgroundSize: '200% 200%',
+        }}
+      />
       <div className="mx-auto grid min-h-[560px] w-[min(1240px,calc(100%-64px))] grid-cols-[.94fr_1.06fr] items-center gap-16 py-16 max-[980px]:gap-8 max-[680px]:min-h-0 max-[680px]:w-[calc(100%-36px)] max-[680px]:grid-cols-1 max-[680px]:gap-[35px] max-[680px]:pb-[38px] max-[680px]:pt-[54px]">
         <motion.div className="relative z-[2]" style={{ y: y1 }} {...entrance(0.04)}>
           <motion.p {...entrance(0.08)} className="mb-5 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400"><span className="h-0.5 w-[22px] bg-current"></span> {copy.hero.studio} · Mbeya - Kiwira, Tandale</motion.p>
