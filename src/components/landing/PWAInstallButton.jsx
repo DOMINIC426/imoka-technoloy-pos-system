@@ -71,7 +71,7 @@ export default function PWAInstallButton() {
           onClick={handleInstall}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
-          className="fixed bottom-24 right-8 z-50 grid size-14 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg transition-transform hover:scale-110 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+          className="fixed bottom-24 right-8 z-50 grid size-14 place-items-center rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-gray-900 shadow-lg transition-transform hover:scale-110 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500"
           aria-label="Install app"
         >
           <Download size={24} />
