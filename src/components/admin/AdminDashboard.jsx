@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock3, Download, FileClock, Home, LayoutDashboard, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock3, Download, FileClock, Home, LayoutDashboard, Menu, Package, Pencil, Plus, Search, Trash2, Upload, Users, X } from 'lucide-react';
 import { apiUrl } from '../../api.js';
 import { confirmAction } from '../ui/FeedbackProvider.jsx';
 import UserMenu from '../ui/UserMenu.jsx';
@@ -40,6 +40,7 @@ const navGroups = [
 export default function AdminDashboard({ token, user, onSignOut }) {
   const [activePage, setActivePage] = useState('dashboard');
   const [sidebarExpanded, setSidebarExpanded] = useState(() => localStorage.getItem('imoka_admin_sidebar_collapsed') !== 'true');
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 700px)').matches);
   const [navSearch, setNavSearch] = useState('');
   const [summary, setSummary] = useState(null);
   const [users, setUsers] = useState({ users: [], page: 1, pageCount: 1, total: 0 });
@@ -62,7 +63,10 @@ export default function AdminDashboard({ token, user, onSignOut }) {
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 700px)');
-    const syncSidebar = event => setSidebarExpanded(!event.matches && localStorage.getItem('imoka_admin_sidebar_collapsed') !== 'true');
+    const syncSidebar = event => {
+      setIsMobile(event.matches);
+      setSidebarExpanded(!event.matches && localStorage.getItem('imoka_admin_sidebar_collapsed') !== 'true');
+    };
     syncSidebar(media);
     media.addEventListener('change', syncSidebar);
     return () => media.removeEventListener('change', syncSidebar);
@@ -226,14 +230,14 @@ export default function AdminDashboard({ token, user, onSignOut }) {
 
   function toggleSidebar() {
     setSidebarExpanded(value => {
-      localStorage.setItem('imoka_admin_sidebar_collapsed', String(!value));
+      if (!isMobile) localStorage.setItem('imoka_admin_sidebar_collapsed', String(!value));
       return !value;
     });
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f5f8] text-gray-900">
-      <motion.aside animate={{ width: sidebarExpanded ? 260 : 76 }} transition={{ type: 'spring', stiffness: 320, damping: 32 }} className="fixed inset-y-0 left-0 z-20 flex flex-col overflow-visible border-r border-gray-200 bg-white px-3 py-4 text-gray-800">
+    <div className="min-h-screen overflow-x-clip bg-[#f4f5f8] text-gray-900">
+      <motion.aside animate={{ width: isMobile ? 260 : sidebarExpanded ? 260 : 76, x: isMobile && !sidebarExpanded ? -260 : 0 }} transition={{ type: 'spring', stiffness: 320, damping: 32 }} className="fixed inset-y-0 left-0 z-20 flex flex-col overflow-visible border-r border-gray-200 bg-white px-3 py-4 text-gray-800">
         <div className={`flex h-12 items-center ${sidebarExpanded ? 'justify-between px-1' : 'justify-center'}`}>
           <a href="#home" className="flex min-w-0 items-center gap-3 text-gray-900 no-underline" title="Imoka administration"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#6538e8] text-lg font-bold text-white">I</span>{sidebarExpanded && <span className="min-w-0"><strong className="block truncate text-sm tracking-wide">IMOKA POS</strong><small className="block text-[9px] tracking-[.14em] text-gray-500">ADMIN WORKSPACE</small></span>}</a>
           {sidebarExpanded && <button className="grid size-8 shrink-0 place-items-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" type="button" onClick={toggleSidebar} aria-label="Collapse menu" title="Collapse menu"><ChevronLeft size={18} /></button>}
@@ -242,31 +246,34 @@ export default function AdminDashboard({ token, user, onSignOut }) {
         <div className="my-4 h-px bg-gray-200" />
         {sidebarExpanded && <label className="mb-5 flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 text-gray-500 focus-within:border-violet-400"><Search size={15} /><input className="min-w-0 flex-1 bg-transparent text-xs text-gray-800 outline-none placeholder:text-gray-400" value={navSearch} onChange={event => setNavSearch(event.target.value)} placeholder="Search menu" aria-label="Search menu" /></label>}
         <nav className="grid content-start gap-5 overflow-y-auto" aria-label="Admin navigation">
-          {filteredGroups.map(group => <div key={group.title}>{sidebarExpanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-gray-400">{group.title}</p>}<div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setActivePage(id)} className={`flex w-full items-center gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors ${sidebarExpanded ? '' : 'justify-center px-0'} ${activePage === id ? 'border-violet-100 bg-violet-50 text-violet-700' : 'border-transparent bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`} aria-current={activePage === id ? 'page' : undefined} title={sidebarExpanded ? undefined : label}><Icon size={18} aria-hidden="true" /><span className={sidebarExpanded ? 'truncate' : 'sr-only'}>{label}</span></button>)}</div></div>)}
+          {filteredGroups.map(group => <div key={group.title}>{sidebarExpanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-gray-400">{group.title}</p>}<div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => { setActivePage(id); if (isMobile) setSidebarExpanded(false); }} className={`flex w-full items-center gap-3 rounded-lg border px-3.5 py-3 text-left text-sm transition-colors ${sidebarExpanded ? '' : 'justify-center px-0'} ${activePage === id ? 'border-violet-100 bg-violet-50 text-violet-700' : 'border-transparent bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`} aria-current={activePage === id ? 'page' : undefined} title={sidebarExpanded ? undefined : label}><Icon size={18} aria-hidden="true" /><span className={sidebarExpanded ? 'truncate' : 'sr-only'}>{label}</span></button>)}</div></div>)}
         </nav>
         <div className="mt-auto border-t border-gray-200 pt-3"><div className={`mb-2 flex items-center gap-2.5 rounded-lg bg-gray-50 p-2 ${sidebarExpanded ? '' : 'justify-center'}`}><span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">{user.firstName?.[0]}{user.lastName?.[0]}</span>{sidebarExpanded && <span className="min-w-0 flex-1"><strong className="block truncate text-xs">{user.firstName} {user.lastName}</strong><small className="text-[10px] text-gray-500">Administrator</small></span>}</div></div>
       </motion.aside>
 
-      {sidebarExpanded && <button className="fixed inset-0 z-10 hidden bg-gray-950/25 max-[700px]:block" type="button" aria-label="Close navigation menu" onClick={toggleSidebar} />}
-      <main className={`min-h-screen transition-[margin] duration-300 ${sidebarExpanded ? 'ml-[276px] max-[700px]:ml-[92px]' : 'ml-[92px]'}`}>
-        <header className="sticky top-0 z-10 flex min-h-[72px] items-center justify-between border-b border-gray-200 bg-white px-8 max-[700px]:px-4">
-          <div><p className="m-0 text-[10px] font-bold uppercase tracking-[.15em] text-violet-600">Imoka Technology</p><h1 className="mt-1 text-xl font-semibold">{navItems.find(item => item.id === activePage)?.label}</h1></div>
+      {isMobile && sidebarExpanded && <button className="fixed inset-0 z-[15] bg-gray-950/25" type="button" aria-label="Close navigation menu" onClick={toggleSidebar} />}
+      <main className={`min-h-screen min-w-0 transition-[margin] duration-300 ${sidebarExpanded ? 'ml-[276px]' : 'ml-[92px]'} max-[700px]:ml-0`}>
+        <header className="sticky top-0 z-10 flex min-h-[72px] items-center justify-between gap-3 border-b border-gray-200 bg-white px-8 max-[700px]:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <button className="grid size-10 shrink-0 place-items-center rounded-md text-gray-600 hover:bg-gray-100 min-[701px]:hidden" type="button" onClick={toggleSidebar} aria-label={sidebarExpanded ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={sidebarExpanded}><Menu size={20} /></button>
+            <div className="min-w-0"><p className="m-0 text-[10px] font-bold uppercase tracking-[.15em] text-violet-600">Imoka Technology</p><h1 className="mt-1 truncate text-xl font-semibold">{navItems.find(item => item.id === activePage)?.label}</h1></div>
+          </div>
           <UserMenu user={user} onSignOut={onSignOut} />
         </header>
 
-        <section className="mx-auto max-w-[1400px] p-8 max-[700px]:p-4">
+        <section className="mx-auto min-w-0 max-w-[1400px] p-8 max-[700px]:p-4">
           {error && <div className="mb-5 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">{error}</div>}
           {loading && <p className="mb-4 text-sm text-gray-500" aria-live="polite">Loading...</p>}
 
           {activePage === 'dashboard' && (
             <>
-              <div className="mb-7 flex items-end justify-between gap-4 max-[500px]:items-start max-[500px]:flex-col"><div><p className="text-sm text-gray-500">A live view of today’s activity.</p><h2 className="mt-1 text-2xl font-semibold">Business overview</h2></div><span className="text-xs text-gray-500">{new Date().toLocaleDateString(undefined, { dateStyle: 'full' })}</span></div>
+              <div className="mb-7 flex items-end justify-between gap-4 max-[500px]:items-start max-[500px]:flex-col"><div><p className="text-sm text-gray-500">A live view of today’s activity.</p><h2 className="mt-1 text-2xl font-semibold">Business overview</h2></div><span className="text-xs text-gray-500 max-[500px]:text-left">{new Date().toLocaleDateString(undefined, { dateStyle: 'full' })}</span></div>
               <div className="grid grid-cols-3 gap-4 max-[1000px]:grid-cols-2 max-[500px]:grid-cols-1">
-                <article className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"><span className="grid size-10 place-items-center rounded-md bg-violet-50 text-violet-700"><Users size={19} /></span><p className="mt-5 text-sm text-gray-500">Total users</p><strong className="mt-1 block text-3xl font-semibold">{summary?.totalUsers ?? '—'}</strong><span className="mt-2 block text-xs text-gray-500">Admin and cashier accounts</span></article>
-                <article className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"><span className="grid size-10 place-items-center rounded-md bg-violet-50 text-violet-700"><BadgeDollarSign size={19} /></span><p className="mt-5 text-sm text-gray-500">Sales today</p><strong className="mt-1 block text-3xl font-semibold">{summary ? money(summary.salesToday) : '—'}</strong><span className="mt-2 block text-xs text-gray-500">{summary?.transactionsToday ?? 0} completed transactions</span></article>
-                <article className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"><span className="grid size-10 place-items-center rounded-md bg-violet-50 text-violet-700"><Activity size={19} /></span><p className="mt-5 text-sm text-gray-500">Open shifts</p><strong className="mt-1 block text-3xl font-semibold">{summary?.openShifts ?? '—'}</strong><span className="mt-2 block text-xs text-gray-500">Cashier sessions in progress</span></article>
+                <article className="min-w-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"><span className="grid size-10 place-items-center rounded-md bg-violet-50 text-violet-700"><Users size={19} /></span><p className="mt-5 text-sm text-gray-500">Total users</p><strong className="mt-1 block break-words text-3xl font-semibold">{summary?.totalUsers ?? '—'}</strong><span className="mt-2 block text-xs text-gray-500">Admin and cashier accounts</span></article>
+                <article className="min-w-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"><span className="grid size-10 place-items-center rounded-md bg-violet-50 text-violet-700"><BadgeDollarSign size={19} /></span><p className="mt-5 text-sm text-gray-500">Sales today</p><strong className="mt-1 block break-words text-3xl font-semibold">{summary ? money(summary.salesToday) : '—'}</strong><span className="mt-2 block text-xs text-gray-500">{summary?.transactionsToday ?? 0} completed transactions</span></article>
+                <article className="min-w-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"><span className="grid size-10 place-items-center rounded-md bg-violet-50 text-violet-700"><Activity size={19} /></span><p className="mt-5 text-sm text-gray-500">Open shifts</p><strong className="mt-1 block break-words text-3xl font-semibold">{summary?.openShifts ?? '—'}</strong><span className="mt-2 block text-xs text-gray-500">Cashier sessions in progress</span></article>
               </div>
-              <div className="mt-6 flex items-center justify-between border-t border-gray-200 py-4 text-sm text-gray-600"><span>Review staff and shift activity</span><button type="button" className="inline-flex items-center gap-2 font-semibold text-violet-700 hover:text-violet-900" onClick={() => setActivePage('shifts')}>View shifts <ArrowDownRight size={16} /></button></div>
+              <div className="mt-6 flex items-center justify-between gap-3 border-t border-gray-200 py-4 text-sm text-gray-600 max-[420px]:items-start"><span>Review staff and shift activity</span><button type="button" className="inline-flex shrink-0 items-center gap-2 font-semibold text-violet-700 hover:text-violet-900" onClick={() => setActivePage('shifts')}>View shifts <ArrowDownRight size={16} /></button></div>
             </>
           )}
 
@@ -275,7 +282,7 @@ export default function AdminDashboard({ token, user, onSignOut }) {
               <div className="mb-6 flex items-end justify-between gap-4 max-[600px]:items-stretch max-[600px]:flex-col"><div><p className="text-sm text-gray-500">Manage team access.</p><h2 className="mt-1 text-2xl font-semibold">Users <span className="ml-1 text-base font-normal text-gray-500">({users.total})</span></h2></div><button type="button" onClick={openUserForm} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-violet-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-violet-700"><Plus size={17} /> Add user</button></div>
               <label className="mb-4 flex h-11 max-w-[440px] items-center gap-3 rounded-md border border-gray-200 bg-white px-3.5 focus-within:border-violet-400"><Search size={17} className="text-gray-500" /><input className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Search name, email or role" aria-label="Search users" /></label>
               <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm"><table className="w-full min-w-[620px] border-collapse text-left text-sm"><thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500"><tr><th className="px-4 py-3 font-semibold">Name</th><th className="px-4 py-3 font-semibold">Email</th><th className="px-4 py-3 font-semibold">Role</th><th className="px-4 py-3 font-semibold">Added</th></tr></thead><tbody>{users.users.map(record => <tr className="border-t border-gray-100" key={record.id}><td className="px-4 py-3.5 font-medium">{record.firstName} {record.lastName}</td><td className="px-4 py-3.5 text-gray-600">{record.email}</td><td className="px-4 py-3.5"><span className="inline-flex rounded bg-violet-50 px-2.5 py-1 text-xs font-semibold capitalize text-violet-700">{record.role}</span></td><td className="px-4 py-3.5 text-gray-500">{new Date(record.createdAt).toLocaleDateString()}</td></tr>)}{!users.users.length && !loading && <tr><td className="px-4 py-10 text-center text-gray-500" colSpan="4">No users found.</td></tr>}</tbody></table></div>
-              <div className="mt-4 flex items-center justify-between gap-3 text-sm text-gray-600"><span>Page {users.page} of {users.pageCount}</span><div className="flex gap-2"><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={users.page <= 1 || loading} onClick={() => setPage(current => Math.max(1, current - 1))}><ArrowLeft size={15} /> Previous</button><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={users.page >= users.pageCount || loading} onClick={() => setPage(current => current + 1)}>Next <ArrowRight size={15} /></button></div></div>
+              <div className="mt-4 flex items-center justify-between gap-3 text-sm text-gray-600 max-[420px]:flex-col max-[420px]:items-stretch"><span>Page {users.page} of {users.pageCount}</span><div className="flex justify-between gap-2"><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={users.page <= 1 || loading} onClick={() => setPage(current => Math.max(1, current - 1))}><ArrowLeft size={15} /> Previous</button><button className="inline-flex h-9 items-center gap-1.5 border border-gray-300 bg-white px-3 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={users.page >= users.pageCount || loading} onClick={() => setPage(current => current + 1)}>Next <ArrowRight size={15} /></button></div></div>
             </>
           )}
 
@@ -320,8 +327,8 @@ export default function AdminDashboard({ token, user, onSignOut }) {
       </main>
 
       <AnimatePresence>
-      {showUserForm && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 grid place-items-center bg-gray-950/45 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowUserForm(false); }}>
-        <motion.section initial={{ opacity: 0, y: 15, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 360, damping: 28 }} className="w-full max-w-[480px] border border-gray-200 bg-white p-6 shadow-[0_25px_80px_rgba(9,32,26,0.25)]" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
+      {showUserForm && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gray-950/45 p-3 sm:p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowUserForm(false); }}>
+        <motion.section initial={{ opacity: 0, y: 15, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 360, damping: 28 }} className="max-h-[calc(100dvh-1.5rem)] w-full max-w-[480px] overflow-y-auto border border-gray-200 bg-white p-4 shadow-[0_25px_80px_rgba(9,32,26,0.25)] sm:max-h-[calc(100dvh-2rem)] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
           <div className="mb-5 flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-violet-600">Team access</p><h2 id="create-user-title" className="mt-1 text-2xl font-semibold">Add a cashier</h2></div><button type="button" className="grid size-9 place-items-center text-gray-500 hover:bg-gray-100 hover:text-gray-900" aria-label="Close" onClick={() => setShowUserForm(false)}><X size={19} /></button></div>
           {createdUser ? <div className="rounded-md border border-violet-200 bg-violet-50 p-4"><p className="font-semibold text-violet-800">Cashier account created</p><p className="mt-2 text-sm text-gray-700">{createdUser.user.firstName} {createdUser.user.lastName} can sign in with:</p><p className="mt-3 text-sm"><strong>Email:</strong> {createdUser.user.email}</p><p className="mt-1 text-sm"><strong>Temporary password:</strong> <code className="select-all bg-white px-1.5 py-1">{createdUser.initialPassword}</code></p><p className="mt-3 text-xs leading-5 text-gray-600">Share this password securely. The cashier will be required to change it at first sign-in.</p><button className="mt-5 h-10 w-full rounded-md bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700" type="button" onClick={() => setShowUserForm(false)}>Done</button></div> : <form className="grid gap-4" onSubmit={createUser} noValidate>
             <label className="grid gap-1.5 text-sm font-medium">First name<input className="h-11 rounded-md border border-gray-200 px-3 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100" name="firstName" type="text" maxLength={80} autoComplete="given-name" required /></label>
@@ -334,8 +341,8 @@ export default function AdminDashboard({ token, user, onSignOut }) {
         </motion.section>
       </motion.div>}
 
-      {showProductForm && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 grid place-items-center bg-gray-950/45 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowProductForm(false); }}>
-        <motion.section initial={{ opacity: 0, y: 15, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 360, damping: 28 }} className="w-full max-w-[480px] border border-gray-200 bg-white p-6 shadow-[0_25px_80px_rgba(9,32,26,0.25)]" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
+      {showProductForm && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gray-950/45 p-3 sm:p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowProductForm(false); }}>
+        <motion.section initial={{ opacity: 0, y: 15, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 360, damping: 28 }} className="max-h-[calc(100dvh-1.5rem)] w-full max-w-[480px] overflow-y-auto border border-gray-200 bg-white p-4 shadow-[0_25px_80px_rgba(9,32,26,0.25)] sm:max-h-[calc(100dvh-2rem)] sm:p-6" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
           <div className="mb-5 flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-violet-600">Shared catalog</p><h2 id="product-form-title" className="mt-1 text-2xl font-semibold">{editingProduct ? 'Edit product' : 'Add product'}</h2></div><button type="button" className="grid size-9 place-items-center text-gray-500 hover:bg-gray-100 hover:text-gray-900" aria-label="Close" onClick={() => setShowProductForm(false)}><X size={19} /></button></div>
           <form className="grid gap-4" onSubmit={saveProduct} noValidate>
             <label className="grid gap-1.5 text-sm font-medium">Product name<input className="h-11 rounded-md border border-gray-200 px-3 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100" name="name" type="text" maxLength={160} defaultValue={editingProduct?.name || ''} required /></label>

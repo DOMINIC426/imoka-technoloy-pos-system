@@ -256,7 +256,7 @@ function renderProducts() {
         const stockTracked = product.stockTracked !== false;
         const outOfStock = stockTracked && product.stock <= 0;
         const stockLabel = stockTracked ? (outOfStock ? 'Out of stock' : product.stock + ' in stock') : 'Non-stock item';
-        return `<div class="rounded-[11px] border border-gray-200 bg-white p-3.5"><h3 class="mb-[7px] mt-0 text-sm font-semibold">${esc(product.name)}</h3><div class="font-bold">${money(product.price)}</div><div class="mb-3 mt-1.5 text-[11px] ${outOfStock ? 'text-red-600' : stockTracked && product.stock <= 5 ? 'text-amber-700' : 'text-gray-500'}">${stockLabel}</div><button class="${smallButtonClass}" ${outOfStock ? 'disabled' : ''} onclick="addToCart('${product.id}')">Add to cart</button></div>`;
+        return `<div class="min-w-0 rounded-[11px] border border-gray-200 bg-white p-3.5"><h3 class="mb-[7px] mt-0 break-words text-sm font-semibold">${esc(product.name)}</h3><div class="break-words font-bold">${money(product.price)}</div><div class="mb-3 mt-1.5 text-[11px] ${outOfStock ? 'text-red-600' : stockTracked && product.stock <= 5 ? 'text-amber-700' : 'text-gray-500'}">${stockLabel}</div><button class="${smallButtonClass} max-w-full whitespace-normal text-center" ${outOfStock ? 'disabled' : ''} onclick="addToCart('${product.id}')">Add to cart</button></div>`;
     }).join('') || `<div class="${emptyClass}">No matching products.</div>`;
 }
 
@@ -292,7 +292,7 @@ function renderCart() {
     box.innerHTML = cart.length
         ? cart.map(row => {
             const product = db.products.find(item => item.id === row.id);
-            return `<div class="grid grid-cols-[minmax(0,1fr)_72px_90px_30px] items-center gap-2 border-b border-gray-200 py-2.5 text-[13px] max-[700px]:grid-cols-[minmax(0,1fr)_54px_minmax(64px,auto)_30px] max-[700px]:gap-1 max-[700px]:text-[11px]"><div>${esc(product.name)}<br><small class="text-gray-500">${money(product.price)}</small></div><input class="${inputClass} w-[72px] max-[700px]:w-[54px]" type="number" min="1" ${product.stockTracked === false ? '' : `max="${product.stock}"`} value="${row.qty}" onchange="setQty('${row.id}',this.value)"><strong class="text-right">${money(product.price * row.qty)}</strong><button class="${smallButtonClass}" onclick="removeCart('${row.id}')">×</button></div>`;
+            return `<div class="grid min-w-0 grid-cols-[minmax(0,1fr)_72px_90px_30px] items-center gap-2 border-b border-gray-200 py-2.5 text-[13px] max-[700px]:grid-cols-[minmax(0,1fr)_48px_minmax(0,auto)_30px] max-[700px]:gap-1 max-[700px]:text-[11px]"><div class="min-w-0 break-words">${esc(product.name)}<br><small class="text-gray-500">${money(product.price)}</small></div><input class="${inputClass} w-[72px] max-[700px]:w-12" type="number" min="1" ${product.stockTracked === false ? '' : `max="${product.stock}"`} value="${row.qty}" onchange="setQty('${row.id}',this.value)"><strong class="min-w-0 break-words text-right">${money(product.price * row.qty)}</strong><button class="${smallButtonClass} min-w-0 px-1" onclick="removeCart('${row.id}')" aria-label="Remove ${esc(product.name)}">×</button></div>`;
         }).join('')
         : `<div class="${emptyClass}">Cart is empty.</div>`;
 
