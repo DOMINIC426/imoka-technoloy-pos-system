@@ -2,10 +2,43 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { heroImage } from '../content.js';
 import { useLanguage } from '../language.js';
+import { useState, useEffect } from 'react';
 
 export default function Hero() {
   const { copy } = useLanguage();
   const reduceMotion = useReducedMotion();
+  const [currentService, setCurrentService] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const services = ['Branding', 'Printing', 'Graphics', 'Internet Service'];
+  const typingSpeed = 100;
+  const deletingSpeed = 50;
+  const pauseDuration = 3000;
+
+  useEffect(() => {
+    const currentWord = services[currentService];
+    
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (displayText.length < currentWord.length) {
+          setDisplayText(currentWord.slice(0, displayText.length + 1));
+        } else {
+          setTimeout(() => setIsDeleting(true), pauseDuration);
+        }
+      } else {
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1));
+        } else {
+          setIsDeleting(false);
+          setCurrentService((prev) => (prev + 1) % services.length);
+        }
+      }
+    }, isDeleting ? deletingSpeed : typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, currentService, services]);
+
   const entrance = (delay = 0) => reduceMotion ? {} : { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.62, delay, ease: [0.22, 1, 0.36, 1] } };
   return (
     <section className="isolate bg-gradient-to-br from-gray-950 via-gray-900 to-slate-800 text-white" id="home">
@@ -14,7 +47,14 @@ export default function Hero() {
           <motion.p {...entrance(0.08)} className="mb-5 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400"><span className="h-0.5 w-[22px] bg-current"></span> {copy.hero.studio} · Mbeya - Kiwira, Tandale</motion.p>
           <motion.h1 {...entrance(0.16)} className="m-0 max-w-[640px] text-[72px] font-bold uppercase leading-[.88] text-blue-400 [font-family:'Barlow_Condensed',sans-serif] max-[980px]:text-[62px] max-[680px]:max-w-[430px] max-[680px]:text-[56px] max-[680px]:leading-[.94] max-[380px]:text-[48px]">IMOKA <em className="not-italic">TECHNOLOGY</em></motion.h1>
           <motion.h2 {...entrance(0.24)} className="mt-[17px] max-w-[470px] text-[26px] font-semibold uppercase leading-[1.05] text-white [font-family:'Barlow_Condensed',sans-serif] max-[680px]:max-w-[390px] max-[680px]:text-[23px]">{copy.hero.tagline}</motion.h2>
-          <motion.p {...entrance(0.31)} className="mt-[15px] max-w-[425px] text-[10px] uppercase leading-[1.7] tracking-[.05em] text-gray-300 max-[680px]:max-w-[390px] max-[680px]:text-[9px]">{copy.hero.serviceList}</motion.p>
+          <motion.p {...entrance(0.31)} className="mt-[15px] max-w-[425px] text-[10px] uppercase leading-[1.7] tracking-[.05em] text-gray-300 max-[680px]:max-w-[390px] max-[680px]:text-[9px]">
+            <span className="text-blue-400">{displayText}</span>
+            <motion.span 
+              animate={{ opacity: [1, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 0.5 }}
+              className="inline-block w-[2px] h-[1em] bg-blue-400 ml-1 align-middle"
+            />
+          </motion.p>
           <motion.div {...entrance(0.38)} className="mt-[29px] flex items-center gap-7 max-[380px]:items-start max-[380px]:flex-col max-[380px]:gap-4">
             <a className="inline-flex min-h-12 items-center justify-center gap-[22px] bg-black px-[18px] text-xs font-extrabold uppercase text-white no-underline transition-transform hover:-translate-y-0.5" href="#login">{copy.hero.getStarted} <ArrowUpRight size={18} /></a>
             <a className="inline-flex items-center gap-2 text-xs font-semibold text-gray-100 no-underline" href="#services">{copy.hero.explore} <ArrowDownRight size={16} /></a>
