@@ -10,14 +10,12 @@ import ScrollReveal from './ScrollReveal.jsx';
 import Counter from './Counter.jsx';
 import MouseTrail from './MouseTrail.jsx';
 import BackToTop from './BackToTop.jsx';
-import PWAInstallButton from './PWAInstallButton.jsx';
 import { LanguageProvider } from './language.js';
 
 export default function LandingPage() {
   return (
     <LanguageProvider>
       <div className="overflow-hidden bg-gray-50 font-sans text-gray-900">
-        <PWAInstallButton />
         <MouseTrail />
         <ScrollProgress />
         <Navbar />
