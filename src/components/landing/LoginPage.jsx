@@ -82,10 +82,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <label className="block text-sm font-semibold text-gray-800" htmlFor="login-password">Password</label>
-                <a className="text-xs font-semibold text-violet-700 underline underline-offset-4 hover:text-violet-900" href="#forgot-password">Forgot password?</a>
-              </div>
+              
               <div className={`flex h-12 items-center gap-3 border bg-white px-3.5 transition-colors focus-within:border-[#367c69] ${errors.password ? 'border-rose-500' : 'border-gray-300'}`}>
                 <LockKeyhole size={18} className="shrink-0 text-gray-500" aria-hidden="true" />
                 <input className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" id="login-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" maxLength={128} value={password} onChange={(event) => { setPassword(event.target.value); setErrors((current) => ({ ...current, password: '', form: '' })); }} placeholder="Your password" aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? 'password-error' : undefined} />
@@ -96,6 +93,10 @@ export default function LoginPage() {
 
             {errors.form && <p className="text-sm text-rose-700" role="alert">{errors.form}</p>}
             <button className="mt-2 inline-flex h-[50px] items-center justify-center gap-2 bg-[#174e46] px-5 text-sm font-bold text-white transition-colors hover:bg-[#23665a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#174e46] disabled:cursor-wait disabled:opacity-60" type="submit" disabled={submitting}>{submitting ? 'Signing in...' : 'Sign in'} {!submitting && <ArrowRight size={17} />}</button>
+            <div className="mb-2 flex items-center justify-between gap-3">
+                <label className="block text-sm font-semibold text-gray-800" htmlFor="login-password">Password</label>
+                <a className="text-xs font-semibold text-violet-700 underline underline-offset-4 hover:text-violet-900" href="#forgot-password">Forgot password?</a>
+              </div>
           </form>
           <p className="mt-8 border-t border-gray-300 pt-5 text-sm text-gray-600">New to Imoka? <a className="font-semibold text-[#23665a] underline decoration-[#a8c8b5] underline-offset-4 hover:text-[#174e46]" href="mailto:imokaprints@gmail.com">Contact our team</a></p>
         </div>
