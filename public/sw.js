@@ -1,4 +1,4 @@
-const CACHE_NAME = 'imoka-pos-v1';
+const CACHE_NAME = 'imoka-pos-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -9,9 +9,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          // Delete ALL old caches to force refresh
+          return caches.delete(cacheName);
         })
       );
     })
@@ -20,19 +19,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only cache HTML pages, let everything else pass through
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          if (response) {
-            return response;
-          }
-          return fetch(event.request);
-        })
-    );
-  } else {
-    // For all other requests (assets, API, etc.), use network only
-    event.respondWith(fetch(event.request));
-  }
+  // Pass everything through to network - disable caching for now
+  event.respondWith(fetch(event.request));
 });
