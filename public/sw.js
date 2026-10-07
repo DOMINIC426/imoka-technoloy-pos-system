@@ -1,27 +1,7 @@
 const CACHE_NAME = 'imoka-pos-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -36,4 +16,23 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  // Only cache HTML pages, let everything else pass through
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request);
+        })
+    );
+  } else {
+    // For all other requests (assets, API, etc.), use network only
+    event.respondWith(fetch(event.request));
+  }
 });
