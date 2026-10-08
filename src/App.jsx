@@ -28,6 +28,7 @@ function CashierApp() {
   const [expanded, setExpanded] = useState(() => localStorage.getItem('imoka_cashier_sidebar_collapsed') !== 'true');
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 700px)').matches);
   const [search, setSearch] = useState('');
+  const [activePage, setActivePage] = useState('dashboard');
   const [currentUser] = useState(readSessionUser);
 
   useEffect(() => {
@@ -91,7 +92,7 @@ function CashierApp() {
         <nav className="nav grid content-start gap-5 overflow-y-auto" aria-label="Cashier navigation">
           {navigation.map(group => <div key={group.title}>
             {expanded && <p className="mb-2 px-2 text-[9px] font-bold uppercase tracking-[.18em] text-gray-400">{group.title}</p>}
-            <div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" data-page={id} onClick={() => { if (isMobile) setExpanded(false); }} title={expanded ? undefined : label} className={`${navButtonClass} ${expanded ? '' : 'justify-center px-0'}`}><Icon size={18} className="shrink-0" />{expanded && <span className="truncate">{label}</span>}</button>)}</div>
+            <div className="grid gap-1.5">{group.items.map(({ id, label, icon: Icon }) => <button key={id} type="button" data-page={id} onClick={() => { setActivePage(id); if (isMobile) setExpanded(false); }} title={expanded ? undefined : label} className={`${navButtonClass} ${activePage === id ? 'active' : ''} ${expanded ? '' : 'justify-center px-0'}`}><Icon size={18} className="shrink-0" />{expanded && <span className="truncate">{label}</span>}</button>)}</div>
           </div>)}
         </nav>
         
@@ -107,7 +108,7 @@ function CashierApp() {
         <header className="topbar sticky top-0 z-[4] flex h-[70px] items-center justify-between border-b border-gray-200 bg-white px-7 max-[700px]:gap-2 max-[700px]:px-[15px]">
           <div className="flex min-w-0 items-center gap-2">
             <button className="grid size-10 shrink-0 place-items-center rounded-md text-gray-600 hover:bg-gray-100 min-[701px]:hidden" type="button" onClick={toggleSidebar} aria-label={expanded ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={expanded}><Menu size={20} /></button>
-            <strong className="truncate text-lg max-[420px]:text-[15px]" id="pageTitle">Dashboard</strong>
+            <strong className="truncate text-lg max-[420px]:text-[15px]" id="pageTitle">{cashierNavigation.flatMap(g => g.items).find(item => item.id === activePage)?.label || 'Dashboard'}</strong>
           </div>
           <div className="flex shrink-0 items-center gap-4 max-[700px]:gap-2">
             <div className="whitespace-nowrap text-sm max-[700px]:text-[11px] max-[420px]:hidden" id="clock"></div>
@@ -117,7 +118,7 @@ function CashierApp() {
         </header>
 
         <div className="content mx-auto w-full max-w-[1500px] p-[26px] max-[700px]:p-[15px] max-[420px]:p-3">
-          <section id="dashboard" className="page">
+          <section id="dashboard" className={`page ${activePage === 'dashboard' ? '' : 'hidden'}`}>
             <div className="grid grid-cols-4 gap-[18px] max-[1000px]:grid-cols-2 max-[420px]:grid-cols-1">
               <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Today's sales</div><div className="mt-2 break-words text-[26px] font-extrabold tracking-tight" id="mToday">TZS 0</div><div className="mt-1 text-xs text-gray-500" id="mTodayCount">0 transactions</div></div>
               <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">This month</div><div className="mt-2 break-words text-[26px] font-extrabold tracking-tight" id="mMonth">TZS 0</div><div className="mt-1 text-xs text-gray-500">Gross sales</div></div>
@@ -125,12 +126,12 @@ function CashierApp() {
               <div className="min-w-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-[420px]:p-[14px]"><div className="text-[13px] text-gray-500">Customers</div><div className="mt-2 break-words text-[26px] font-extrabold tracking-tight" id="mCustomers">0</div></div>
             </div>
             <div className={`${panelClass} mt-5`}>
-              <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Recent sales</h2><button className={smallButtonClass} onClick={() => window.location.hash = '#sales'}>View all</button></div>
+              <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Recent sales</h2><button className={smallButtonClass} onClick={() => setActivePage('sales')}>View all</button></div>
               <div className="overflow-x-auto overscroll-x-contain"><table className={tableClass} id="recentTable"></table></div>
             </div>
           </section>
 
-          <section id="shift" className="page hidden">
+          <section id="shift" className={`page ${activePage === 'shift' ? '' : 'hidden'}`}>
             <div className={`${panelClass} mt-0 max-w-[680px]`}>
               <p className="mb-1 text-xs font-bold uppercase tracking-[.14em] text-violet-700">Cashier session</p>
               <h2 className="mb-2 text-xl font-semibold">Current shift</h2>
@@ -146,7 +147,7 @@ function CashierApp() {
             </div>
           </section>
 
-          <section id="sales" className="page hidden">
+          <section id="sales" className={`page ${activePage === 'sales' ? '' : 'hidden'}`}>
             <div className="grid grid-cols-[1.4fr_.6fr] gap-[18px] max-[1000px]:grid-cols-1">
               <div><div className={`${panelClass} mt-0`}>
                 <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">New sale</h2><button className={smallButtonClass} id="clearCartBtn">Clear cart</button></div>
@@ -173,12 +174,12 @@ function CashierApp() {
             </div>
           </section>
 
-          <section id="expenses" className="page hidden"><div className={`${panelClass} mt-0`}>
+          <section id="expenses" className={`page ${activePage === 'expenses' ? '' : 'hidden'}`}><div className={`${panelClass} mt-0`}>
             <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Business expenses</h2><button className={buttonClass} id="addExpenseBtn">Add expense</button></div>
             <div className="overflow-x-auto overscroll-x-contain"><table className={tableClass} id="expensesTable"></table></div>
           </div></section>
 
-          <section id="reports" className="page hidden"><div className={`${panelClass} mt-0`}>
+          <section id="reports" className={`page ${activePage === 'reports' ? '' : 'hidden'}`}><div className={`${panelClass} mt-0`}>
             <div className="mb-4 flex items-center justify-between gap-3 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Sales report</h2><div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2.5 max-[700px]:w-full max-[700px]:justify-start">
               <input className={`${inputClass} w-auto min-w-[150px] flex-1`} id="reportFrom" type="date" />
               <input className={`${inputClass} w-auto min-w-[150px] flex-1`} id="reportTo" type="date" />
@@ -193,7 +194,7 @@ function CashierApp() {
             <div className="mt-[18px] overflow-x-auto overscroll-x-contain"><table className={tableClass} id="reportTable"></table></div>
           </div></section>
 
-          <section id="settings" className="page hidden">
+          <section id="settings" className={`page ${activePage === 'settings' ? '' : 'hidden'}`}>
             <div className={`${panelClass} mt-0`}>
               <h2 className="mb-4 text-base font-semibold">Business settings</h2>
               <div className={formGridClass}>
