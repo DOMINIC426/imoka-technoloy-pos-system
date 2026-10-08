@@ -43,8 +43,30 @@ function CashierApp() {
   }, []);
 
   useEffect(() => {
-    return initializeLegacyApp();
+    const cleanup = initializeLegacyApp();
+    // Load products on mount
+    if (window.loadProducts) {
+      window.loadProducts();
+    }
+    return cleanup;
   }, []);
+
+  // Call render functions when activePage changes
+  useEffect(() => {
+    if (activePage === 'dashboard' && window.renderDashboard) {
+      window.renderDashboard();
+    } else if (activePage === 'shift' && window.renderShift) {
+      window.renderShift();
+    } else if (activePage === 'sales' && window.renderPOS) {
+      window.renderPOS();
+    } else if (activePage === 'expenses' && window.renderExpenses) {
+      window.renderExpenses();
+    } else if (activePage === 'reports' && window.renderReports) {
+      window.renderReports();
+    } else if (activePage === 'settings' && window.renderSettings) {
+      window.renderSettings();
+    }
+  }, [activePage]);
 
   async function signOut() {
     const token = sessionStorage.getItem('imoka_pos_token');
