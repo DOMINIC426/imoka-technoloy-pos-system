@@ -102,7 +102,7 @@ export default function Hero() {
       />
       <div className="mx-auto grid min-h-[560px] w-[min(1240px,calc(100%-64px))] grid-cols-[.94fr_1.06fr] items-center gap-16 py-16 max-[980px]:gap-8 max-[680px]:min-h-0 max-[680px]:w-[calc(100%-36px)] max-[680px]:grid-cols-1 max-[680px]:gap-[35px] max-[680px]:pb-[38px] max-[680px]:pt-[54px]">
         <motion.div className="relative z-[2]" style={{ y: y1 }} {...entrance(0.04)}>
-          <motion.p {...entrance(0.08)} className="mb-5 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400"><span className="h-0.5 w-[22px] bg-current"></span> {copy.hero.studio} · Mbeya - Kiwira, Tandale</motion.p>
+          <motion.p {...entrance(0.08)} className="mb-5 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[.12em] text-blue-400"><span className="h-0.5 w-[22px] bg-current"></span> {copy.hero.studio} · Kiwira, Tanzania</motion.p>
           <motion.h1 {...entrance(0.16)} className="m-0 max-w-[640px] text-[72px] font-bold uppercase leading-[.88] [font-family:'Barlow_Condensed',sans-serif] max-[980px]:text-[62px] max-[680px]:max-w-[430px] max-[680px]:text-[56px] max-[680px]:leading-[.94] max-[380px]:text-[48px]"><GradientText>IMOKA <em className="not-italic">TECHNOLOGY</em></GradientText></motion.h1>
           <motion.h2 {...entrance(0.24)} className="mt-[17px] max-w-[470px] text-[26px] font-semibold uppercase leading-[1.05] text-white [font-family:'Barlow_Condensed',sans-serif] max-[680px]:max-w-[390px] max-[680px]:text-[23px]">{copy.hero.tagline}</motion.h2>
           <motion.p {...entrance(0.31)} className="mt-[15px] max-w-[425px] text-[10px] uppercase leading-[1.7] tracking-[.05em] text-gray-300 max-[680px]:max-w-[390px] max-[680px]:text-[9px]">

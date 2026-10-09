@@ -1,4 +1,4 @@
-import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
+import { ArrowUpRight, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { useLanguage } from '../language.js';
 import TextReveal from '../TextReveal.jsx';
 import GradientText from '../GradientText.jsx';
@@ -15,6 +15,7 @@ export default function Contact() {
         </div>
         <div className="grid min-w-[280px] gap-[22px] max-[680px]:min-w-0 max-[680px]:gap-[19px]">
           <a className="flex items-center gap-[15px] text-[13px] text-white no-underline" href="tel:+255744805938"><Phone className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">{copy.contact.call}</small>+255 744 805 938</span></a>
+          <a className="flex items-center gap-[15px] text-[13px] text-white no-underline" href="https://wa.me/255744805938" target="_blank" rel="noreferrer"><MessageCircle className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">{copy.contact.whatsapp}</small>+255 744 805 938</span></a>
           <a className="flex items-center gap-[15px] text-[13px] text-white no-underline" href="mailto:imokaprints@gmail.com"><Mail className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">{copy.contact.email}</small>imokaprints@gmail.com</span></a>
           <div className="flex items-center gap-[15px] text-[13px] text-white"><MapPin className="text-blue-400" size={17} /><span><small className="mb-1 block text-[10px] text-gray-300">{copy.contact.location}</small>Kiwira Tandale</span></div>
         </div>

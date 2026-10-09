@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, Brush, FileText, MonitorSmartphone, Printer, Wifi } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Brush, Camera, Printer } from 'lucide-react';
 import { services } from '../content.js';
 import { useLanguage } from '../language.js';
 import TextReveal from '../TextReveal.jsx';
 import TiltCard from '../TiltCard.jsx';
 import GradientText from '../GradientText.jsx';
 
-const icons = { brand: Brush, print: Printer, stationery: FileText, design: MonitorSmartphone, internet: Wifi };
+const icons = { brand: Brush, print: Printer, training: BookOpen, security: Camera };
 
 export default function Services() {
   const [activeServiceIndex, setActiveServiceIndex] = useState(0);

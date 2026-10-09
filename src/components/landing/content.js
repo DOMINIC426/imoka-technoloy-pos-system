@@ -1,24 +1,22 @@
 import brandingImage from '../../images/branding.jpg';
 import businessCardImage from '../../images/business-card.jpeg';
 import graphicsImage from '../../images/graphics.jpeg';
-import internetImage from '../../images/internet.jpg';
 import printingImage from '../../images/printing.jpg';
 
 export const heroImage = graphicsImage;
 
 export const services = [
-  { icon: 'brand', title: 'Branding', image: brandingImage },
-  { icon: 'print', title: 'Printing', image: printingImage },
-  { icon: 'stationery', title: 'Stationery', image: businessCardImage },
-  { icon: 'design', title: 'Graphics Design', image: graphicsImage },
-  { icon: 'internet', title: 'Internet Services', image: internetImage }
+  { icon: 'brand', title: 'Graphic Design & Branding', image: brandingImage },
+  { icon: 'print', title: 'Printing & Digital Creation', image: printingImage },
+  { icon: 'training', title: 'ICT Tutoring', image: graphicsImage },
+  { icon: 'security', title: 'Security Installations', image: graphicsImage }
 ];
 
 export const products = [
-  { title: 'Business cards', category: 'Print essentials', image: businessCardImage },
-  { title: 'Branding', category: 'Identity & support', image: brandingImage },
-  { title: 'Large format prints', category: 'Signs & displays', image: printingImage },
-  { title: 'Internet services', category: 'Connectivity', image: internetImage }
+  { title: 'Graphic design & branding', category: 'Brand identity', image: brandingImage },
+  { title: 'Printing & digital creation', category: 'Print & digital content', image: printingImage },
+  { title: 'ICT tutoring', category: 'ICT education', image: graphicsImage },
+  { title: 'CCTV systems', category: 'Security installations', image: graphicsImage }
 ];
 
 export const portfolio = [
