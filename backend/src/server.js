@@ -182,6 +182,18 @@ async function ensureInitialData() {
 
 async function handle(request, response) {
   const url = new URL(request.url, 'http://localhost');
+  
+  // Handle CORS preflight requests
+  if (request.method === 'OPTIONS') {
+    setCors(request, response);
+    response.writeHead(204);
+    response.end();
+    return;
+  }
+  
+  // Set CORS headers for all requests
+  setCors(request, response);
+  
   const session = await getSession(request);
 
   if (session?.user.mustChangePassword && ![
