@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Main Homepage -->
   <url>
-    <loc>https://imoka-technoloy-pos-system.vercel.app/</loc>
+    <loc>https://imoka-technology.vercel.app/</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -10,14 +10,14 @@
   
   <!-- Common Routes (add actual routes as needed) -->
   <url>
-    <loc>https://imoka-technoloy-pos-system.vercel.app/login</loc>
+    <loc>https://imoka-technology.vercel.app/login</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://imoka-technoloy-pos-system.vercel.app/admin</loc>
+    <loc>https://imoka-technology.vercel.app/admin</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

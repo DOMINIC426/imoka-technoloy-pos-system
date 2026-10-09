@@ -1,5 +1,5 @@
 # robots.txt for Imoka Technology POS System
-# Website: https://imoka-technoloy-pos-system.vercel.app/
+# Website: https://imoka-technology.vercel.app/
 
 User-agent: *
 Allow: /
@@ -12,4 +12,4 @@ Allow: /
 # Business: Creative branding, printing, design and internet services
 
 # Sitemap
-Sitemap: https://imoka-technoloy-pos-system.vercel.app/sitemap.xml
+Sitemap: https://imoka-technology.vercel.app/sitemap.xml
