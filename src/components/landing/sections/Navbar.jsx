@@ -1,7 +1,6 @@
 import { useId, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../language.js';
-import PWAInstallButton from '../PWAInstallButton.jsx';
 
 const links = [
   ['home', '#home'],
@@ -23,7 +22,6 @@ export default function Navbar() {
           <span className="grid leading-[.9]"><strong className="text-[19px] font-extrabold tracking-wide">IMOKA</strong><small className="mt-[5px] text-[9px] font-bold tracking-[.19em] text-gray-300">TECHNOLOGY</small></span>
         </a>
         <div className="flex items-center gap-2">
-          <PWAInstallButton />
           <LanguageSwitch className="hidden max-[680px]:inline-flex" />
           <button className="hidden size-[42px] place-items-center border border-white/25 bg-black text-white max-[680px]:grid" type="button" aria-label={menuOpen ? copy.language.closeMenu : copy.language.openMenu} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
