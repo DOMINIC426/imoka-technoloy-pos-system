@@ -665,6 +665,38 @@ async function handle(request, response) {
       return;
     }
 
+    if (request.method === 'GET' && url.pathname === '/api/admin/sales-summary') {
+      const sales = await prisma.sale.findMany({ include: { items: true } });
+      const totalSales = sales.reduce((sum, sale) => sum + Number(sale.total), 0);
+      const totalTransactions = sales.length;
+      
+      const productSalesMap = new Map();
+      let totalProductsSold = 0;
+      
+      sales.forEach(sale => {
+        sale.items.forEach(item => {
+          const existing = productSalesMap.get(item.productId) || { quantitySold: 0, totalRevenue: 0 };
+          productSalesMap.set(item.productId, {
+            productId: item.productId,
+            productName: item.name,
+            quantitySold: existing.quantitySold + item.quantity,
+            totalRevenue: existing.totalRevenue + Number(item.price) * item.quantity
+          });
+          totalProductsSold += item.quantity;
+        });
+      });
+      
+      const productSales = Array.from(productSalesMap.values())
+        .sort((a, b) => b.quantitySold - a.quantitySold)
+        .map(item => ({
+          ...item,
+          totalRevenue: new Prisma.Decimal(item.totalRevenue)
+        }));
+      
+      send(response, 200, { totalSales, totalTransactions, totalProductsSold, productSales });
+      return;
+    }
+
     if (request.method === 'GET' && url.pathname === '/api/admin/backup') {
       await addAudit(session, 'backup.exported', 'database');
       const [users, products, shifts, sales, audit] = await Promise.all([
