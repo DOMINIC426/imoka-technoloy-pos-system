@@ -8,8 +8,10 @@ Allow: /
 # This site was created by Dominic Nazareth Mwaituka
 # Creator: Software Engineering Student at UDOM (University of Dodoma)
 # Owner: Imoka Technology
-# Location: Mbeya, Kiwira, Tandale, Tanzania
-# Business: Creative branding, printing, design and internet services
+# Location: Kiwira, Tanzania
+# Business: ICT and digital services, including graphic design and branding,
+# printing and digital creation, ICT tutoring, and CCTV security installations
+# Contact: +255 744 805 938 (phone or WhatsApp)
 
 # Sitemap
 Sitemap: https://imoka-technology.vercel.app/sitemap.xml

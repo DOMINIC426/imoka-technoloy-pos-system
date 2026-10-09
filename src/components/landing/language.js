@@ -6,32 +6,31 @@ const translations = {
     details: { close: 'Close details', view: 'View details', requestQuote: 'Request a quote' },
     nav: { home: 'Home', services: 'Services', products: 'Products', portfolio: 'Portfolio', contact: 'Contact', main: 'Main navigation' },
     hero: {
-      studio: 'Creative studio',
-      tagline: 'Creative solutions for your business',
-      serviceList: 'Branding / Printing / Stationery / Graphics Design / Internet Services',
+      studio: 'ICT & digital services',
+      tagline: 'Local ICT & digital services in Kiwira',
+      serviceList: 'Graphic Design & Branding / Printing & Digital Creation / ICT Tutoring / CCTV Security',
       getStarted: 'Get started',
       explore: 'Explore services',
-      proof: 'Branding / Printing / Design / Internet',
-      imageAlt: 'Imoka Technology creative solutions promotional artwork',
+      proof: 'Graphic Design / Printing / ICT Training / CCTV',
+      imageAlt: 'Imoka Technology ICT, digital creation, and CCTV services',
       goodIdeas: 'Good ideas.',
       madeReal: 'Made real here.',
       scroll: 'Scroll to explore',
-      studioNote: 'Independent creative & technology studio'
+      studioNote: 'Local ICT and digital services provider'
     },
     services: {
       eyebrow: 'What we do',
-      title: 'Good work,',
-      titleAccent: 'all under one roof.',
-      intro: 'We bring the creative thinking and practical tools your business needs to show up with confidence.',
+      title: 'Local ICT,',
+      titleAccent: 'digital services.',
+      intro: 'Imoka Technology is a local ICT and digital services provider in Kiwira, Tanzania. We offer graphic design and branding, printing and digital creation, ICT tutoring, and CCTV security installations.',
       tabList: 'Our services',
       showcaseLabel: 'Imoka services',
       requestQuote: 'Request a quote',
       descriptions: [
-        'Build a distinctive identity your customers recognize.',
-        'Bring your ideas to life with quality, made-to-fit print.',
-        'Keep your business memorable in every detail and handoff.',
-        'Make your message clear with thoughtful visual design.',
-        'Stay connected with internet solutions for your business.'
+        'Create logos, office banners, and visual media that make your organization recognizable.',
+        'Get custom print solutions and digital content created for your needs.',
+        'Build practical information and communication technology skills with guided training.',
+        'Protect your home or business with professionally installed CCTV surveillance systems.'
       ]
     },
     products: {
@@ -39,12 +38,12 @@ const translations = {
       title: 'From first impression',
       titleAccent: 'to final detail.',
       cta: 'Tell us what you need',
-      categories: ['Print essentials', 'Identity & support', 'Signs & displays', 'Connectivity'],
+      categories: ['Graphic design & branding', 'Printing & digital creation', 'ICT tutoring', 'CCTV security'],
       descriptions: [
-        'Create a polished first impression with custom business cards designed for your brand.',
-        'Bring your brand to life with a consistent visual identity for your business.',
-        'Make your message visible with large-format printing for signs and displays.',
-        'Get reliable internet services that help your team and business stay connected.'
+        'Create logos, office banners, and visual media that give your brand a consistent identity.',
+        'Get custom print solutions and digital content creation for your projects.',
+        'Learn information and communication technology with practical training and educational support.',
+        'Set up CCTV surveillance systems to help monitor your home or business.'
       ]
     },
     portfolio: {
@@ -67,6 +66,7 @@ const translations = {
       titleAccent: 'it happen.',
       cta: 'Start a conversation',
       call: 'Call us',
+      whatsapp: 'Message us on WhatsApp',
       email: 'Email',
       location: 'Find us'
     },
@@ -77,32 +77,31 @@ const translations = {
     details: { close: 'Funga maelezo', view: 'Tazama maelezo', requestQuote: 'Omba makadirio' },
     nav: { home: 'Mwanzo', services: 'Huduma', products: 'Bidhaa', portfolio: 'Kazi zetu', contact: 'Wasiliana', main: 'Menyu kuu' },
     hero: {
-      studio: 'Studio ya ubunifu',
-      tagline: 'Suluhisho bunifu kwa biashara yako',
-      serviceList: 'Branding / Printing / Stationery / Graphics Design / Internet Services',
+      studio: 'Huduma za ICT na kidijitali',
+      tagline: 'Huduma za ICT na kidijitali Kiwira',
+      serviceList: 'Ubunifu wa Picha na Chapa / Uchapishaji na Maudhui ya Kidijitali / Mafunzo ya ICT / CCTV',
       getStarted: 'Anza sasa',
       explore: 'Tazama huduma',
-      proof: 'Branding / Printing / Design / Internet',
-      imageAlt: 'Tangazo la huduma za ubunifu za Imoka Technology',
+      proof: 'Ubunifu / Uchapishaji / Mafunzo ya ICT / CCTV',
+      imageAlt: 'Tangazo la huduma za ICT, kidijitali na CCTV za Imoka Technology',
       goodIdeas: 'Mawazo bora.',
       madeReal: 'Yanatekelezwa hapa.',
       scroll: 'Shuka uone zaidi',
-      studioNote: 'Studio huru ya ubunifu na teknolojia'
+      studioNote: 'Mtoa huduma za ICT na kidijitali wa eneo hili'
     },
     services: {
       eyebrow: 'Tunachofanya',
-      title: 'Kazi bora,',
-      titleAccent: 'huduma zote sehemu moja.',
-      intro: 'Tunakuletea ubunifu na zana muhimu ili biashara yako ionekane kwa kujiamini.',
+      title: 'ICT na huduma,',
+      titleAccent: 'za kidijitali.',
+      intro: 'Imoka Technology ni mtoa huduma za ICT na kidijitali aliyepo Kiwira, Tanzania. Tunatoa huduma za ubunifu wa picha na chapa, uchapishaji na uundaji wa maudhui ya kidijitali, mafunzo ya ICT, na usakinishaji wa mifumo ya ulinzi ya CCTV.',
       tabList: 'Huduma zetu',
       showcaseLabel: 'Huduma za Imoka',
       requestQuote: 'Omba makadirio',
       descriptions: [
-        'Jenga utambulisho wa kipekee ambao wateja wako watautambua.',
-        'Geuza mawazo yako kuwa machapisho bora yanayokidhi mahitaji yako.',
-        'Fanya biashara yako ikumbukwe katika kila maelezo na nyaraka.',
-        'Wasilisha ujumbe wako kwa ubunifu wa picha ulio wazi na makini.',
-        'Endelea kuunganishwa kwa suluhisho za intaneti za biashara yako.'
+        'Tengeneza nembo, mabango ya ofisi na maudhui ya picha yanayoitambulisha taasisi yako.',
+        'Pata huduma za uchapishaji maalum na uundaji wa maudhui ya kidijitali.',
+        'Jifunze stadi za teknolojia ya habari na mawasiliano kupitia mafunzo elekezi.',
+        'Linda nyumba au biashara yako kwa mifumo ya uangalizi ya CCTV iliyosimikwa kitaalamu.'
       ]
     },
     products: {
@@ -110,12 +109,12 @@ const translations = {
       title: 'Kuanzia mvuto wa kwanza',
       titleAccent: 'hadi maelezo ya mwisho.',
       cta: 'Tuambie unachohitaji',
-      categories: ['Mahitaji ya uchapishaji', 'Utambulisho na msaada', 'Mabango na maonyesho', 'Muunganisho wa intaneti'],
+      categories: ['Ubunifu wa picha na chapa', 'Uchapishaji na maudhui ya kidijitali', 'Mafunzo ya ICT', 'Ulinzi wa CCTV'],
       descriptions: [
-        'Tengeneza mwonekano wa kwanza wa kitaalamu kwa kadi za biashara zinazolingana na chapa yako.',
-        'Jenga utambulisho wa picha unaoleta chapa ya biashara yako pamoja.',
-        'Fikisha ujumbe wako kwa uchapishaji wa mabango na maonyesho ya ukubwa mkubwa.',
-        'Pata huduma ya intaneti inayosaidia timu na biashara yako kuendelea kuwasiliana.'
+        'Tengeneza nembo, mabango ya ofisi na maudhui ya picha kwa utambulisho thabiti wa chapa yako.',
+        'Pata uchapishaji maalum na uundaji wa maudhui ya kidijitali kwa miradi yako.',
+        'Jifunze teknolojia ya habari na mawasiliano kupitia mafunzo na msaada wa kielimu.',
+        'Sakinisha mifumo ya uangalizi ya CCTV ili kufuatilia nyumba au biashara yako.'
       ]
     },
     portfolio: {
@@ -138,6 +137,7 @@ const translations = {
       titleAccent: 'liwe halisi.',
       cta: 'Tuanzishe mazungumzo',
       call: 'Piga simu',
+      whatsapp: 'Wasiliana nasi WhatsApp',
       email: 'Barua pepe',
       location: 'Mahali tulipo'
     },
