@@ -31,6 +31,7 @@ const defaultData = {
 let db = loadData();
 let cart = [];
 let currentShift = null;
+let isCompletingSale = false;
 
 function loadData() {
     try {
@@ -321,7 +322,7 @@ function calculateTotal() {
     return { subtotal, discount, tax, total: subtotal - discount + tax };
 }
 
-function saveSale(printIt) {
+async function saveSale(printIt) {
     if (sessionStorage.getItem('imoka_shift_open') !== 'true') {
         showPage('shift');
         return toast('Open your shift before recording any sales');
@@ -348,6 +349,25 @@ function saveSale(printIt) {
         payment: document.getElementById('paymentMethod').value,
         change: paid - totals.total
     };
+
+    if (printIt) {
+        try {
+            await printReceipt(sale);
+        } catch (error) {
+            showNotice(`Unable to open the print dialog: ${error.message}`, 'error');
+            return;
+        }
+
+        const printed = await confirmAction({
+            title: 'Confirm receipt printed',
+            message: 'Was the receipt printed successfully? The sale will only be recorded after you confirm.',
+            confirmLabel: 'Yes, complete sale'
+        });
+        if (!printed) {
+            showNotice('Sale cancelled. No transaction was recorded.', 'info');
+            return;
+        }
+    }
 
     sale.items.forEach(item => {
         const product = db.products.find(entry => entry.id === item.id);
@@ -381,12 +401,20 @@ function saveSale(printIt) {
     renderProducts();
     document.getElementById('amountPaid').value = '';
     toast('Sale saved successfully');
-    if (printIt) printReceipt(sale);
     renderDashboard();
 }
 
-function completeSale() {
-    saveSale(true);
+async function completeSale() {
+    if (isCompletingSale) return;
+    isCompletingSale = true;
+    const button = document.getElementById('completeSaleBtn');
+    if (button) button.disabled = true;
+    try {
+        await saveSale(true);
+    } finally {
+        isCompletingSale = false;
+        if (button) button.disabled = false;
+    }
 }
 
 function printReceipt(s) {
@@ -443,7 +471,16 @@ function printReceipt(s) {
             <small class="text-xs">Please keep this receipt for your records.</small>
         </footer>
     </article>`;
-    window.print();
+    return new Promise((resolve, reject) => {
+        const handleAfterPrint = () => resolve();
+        window.addEventListener('afterprint', handleAfterPrint, { once: true });
+        try {
+            window.print();
+        } catch (error) {
+            window.removeEventListener('afterprint', handleAfterPrint);
+            reject(error);
+        }
+    });
 }
 
 function renderInventory() {
@@ -604,7 +641,7 @@ function renderReports() {
 
 function printReceiptById(id) {
     const sale = db.sales.find(item => item.id === id);
-    if (sale) printReceipt(sale);
+    if (sale) printReceipt(sale).catch(error => showNotice(`Unable to open the print dialog: ${error.message}`, 'error'));
 }
 
 function renderSettings() {

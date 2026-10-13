@@ -189,7 +189,7 @@ function CashierApp() {
                 <div className="mt-4 grid gap-2">
                   <select className={inputClass} id="paymentMethod"><option>Cash</option><option>Mobile Money</option><option>Card</option><option>Bank Transfer</option></select>
                   <input className={inputClass} id="amountPaid" type="number" min="0" placeholder="Amount paid" />
-                  <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700" id="completeSaleBtn" onClick={() => window.completeSale()}>Complete sale &amp; print</button>
+                  <button className="inline-flex items-center justify-center gap-2 rounded-md border border-violet-600 bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50" id="completeSaleBtn" onClick={() => window.completeSale()}>Complete sale &amp; print</button>
                   <button className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50" id="holdOrderBtn">Hold order</button>
                 </div>
               </div></div>
@@ -197,7 +197,7 @@ function CashierApp() {
           </section>
 
           <section id="expenses" className={`page ${activePage === 'expenses' ? '' : 'hidden'}`}><div className={`${panelClass} mt-0`}>
-            <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Business expenses</h2><button className={buttonClass} id="addExpenseBtn">Add expense</button></div>
+            <div className="mb-4 flex items-center justify-between gap-2 max-[700px]:flex-wrap"><h2 className="mb-0 text-base font-semibold">Business expenses</h2><button className={buttonClass} id="addExpenseBtn" onClick={() => window.openExpenseModal()}>Add expense</button></div>
             <div className="overflow-x-auto overscroll-x-contain"><table className={tableClass} id="expensesTable"></table></div>
           </div></section>
 
