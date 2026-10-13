@@ -48,7 +48,7 @@ function createSmtpTransport() {
   };
 }
 
-export async function sendPasswordResetEmail({ email, code }) {
+export async function sendPasswordResetEmail({ email, code, recipientEmail = email }) {
   const mail = createSmtpTransport();
   if (!mail) return false;
 
@@ -59,7 +59,7 @@ export async function sendPasswordResetEmail({ email, code }) {
 
   await mail.transporter.sendMail({
     from: process.env.SMTP_FROM || `Imoka Co Ltd <${mail.user}>`,
-    to: email,
+    to: recipientEmail || email,
     subject,
     text,
     html

